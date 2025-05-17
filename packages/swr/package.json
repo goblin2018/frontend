@@ -1,0 +1,27 @@
+{
+  "name": "@frontend/swr",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@frontend/lib": "workspace:*"
+  },
+  "peerDependencies": {
+    "axios": "^1.9.0",
+    "swr": "^2.3.3"
+  },
+  "devDependencies": {
+    "@frontend/config": "workspace:*"
+  },
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
+  }
+}

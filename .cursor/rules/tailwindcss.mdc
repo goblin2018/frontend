@@ -1,0 +1,6 @@
+---
+description: when to handle style or tailwindcss
+globs: 
+alwaysApply: false
+---
+use tailwindcss version 4.0, doc url https://tailwindcss.com/docs/installation/using-vite

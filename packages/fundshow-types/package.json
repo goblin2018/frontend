@@ -1,0 +1,20 @@
+{
+  "name": "@frontend/fundshow-types",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@frontend/lib": "workspace:*"
+  },
+  "devDependencies": {
+    "@frontend/config": "workspace:*"
+  }
+}

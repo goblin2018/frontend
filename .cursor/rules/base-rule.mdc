@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# base technics
+pnpm turborepo 
+# style
+use simple and clear function varialbe and component names 

@@ -4,4 +4,12 @@
       "mode": "auto"
     }
   ]
+  // "files.watcherExclude": {
+  //   "**/node_modules/**": true,
+  //   "**/dist/**": true,
+  //   "**/.git/**": true
+  // },
+  // "files.exclude": {
+  //   "**/dist": true
+  // }
 }

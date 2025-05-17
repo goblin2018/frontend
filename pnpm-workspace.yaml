@@ -1,3 +1,18 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - apps/*
+  - packages/*
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@swc/core'
+  - '@tarojs/binding'
+  - '@uni-helper/unocss-preset-uni'
+  - core-js
+  - core-js-pure
+  - es5-ext
+  - esbuild
+  - puppeteer
+  - simple-git-hooks
+  - swiper
+  - unrs-resolver
+  - vue-demi
+  - weapp-tailwindcss
