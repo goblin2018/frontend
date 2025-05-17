@@ -1,0 +1,38 @@
+<svg width="375" height="257" viewBox="0 0 375 257" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="40" result="blur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.5"/>
+      </feComponentTransfer>
+    </filter>
+    <clipPath id="clip0_1770_15873">
+      <rect width="375" height="257" fill="white"/>
+    </clipPath>
+  </defs>
+  
+  <g clip-path="url(#clip0_1770_15873)">
+    <!-- 蓝色背景 -->
+    <rect width="375" height="257" fill="#29A7E2"/>
+    
+    <!-- 完全保持原来形状的白色椭圆 -->
+    <g filter="url(#blur)">
+      <ellipse 
+        cx="384.617" 
+        cy="-15.5077" 
+        rx="76.3707" 
+        ry="98.3635" 
+        transform="rotate(45.2299 384.617 -15.5077)" 
+        fill="white"
+      />
+      <ellipse 
+        cx="316.786" 
+        cy="54.7061" 
+        rx="48.6738" 
+        ry="62.6906" 
+        transform="rotate(45.2299 316.786 54.7061)" 
+        fill="white"
+      />
+    </g>
+  </g>
+</svg>

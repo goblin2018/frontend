@@ -1,0 +1,10 @@
+{
+  "mp-weixin": {
+    "optimization": {
+      "subPackages": true
+    },
+    "copyAssets": {
+      "fonts": "static/fonts"
+    }
+  }
+} 
