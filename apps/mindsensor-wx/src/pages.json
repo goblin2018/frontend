@@ -1,0 +1,207 @@
+{
+  "pages": [
+    {
+      "name": "home",
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "首页"
+      },
+      "meta": {
+        "tabBar": true
+      }
+    },
+
+    {
+      "name": "播放",
+      "path": "pages/play/index",
+      "style": {
+        "navigationStyle": "custom"
+      },
+      "navigationBarRightButton": {
+        "hide": true
+      },
+      "meta": {}
+    },
+
+    {
+      "name": "train_history",
+      "path": "pages/train_history/index",
+      "style": {
+        "navigationBarTitleText": "训练记录"
+      },
+      "meta": {}
+    },
+
+    {
+      "name": "about",
+      "path": "pages/about/index",
+      "style": {
+        "navigationBarTitleText": "关于"
+      },
+      "meta": {}
+    },
+
+    {
+      "name": "settings",
+      "path": "pages/settings/index",
+      "style": {
+        "navigationBarTitleText": "设置"
+      },
+      "meta": {}
+    },
+    {
+      "name": "settings-me",
+      "path": "pages/settings/me",
+      "style": {
+        "navigationBarTitleText": "个人信息"
+      },
+      "meta": {}
+    },
+    {
+      "name": "train_picker",
+      "path": "pages/train_picker/index",
+      "style": {
+        "navigationBarTitleText": "选择音频"
+      },
+      "meta": {}
+    },
+
+    {
+      "name": "Me",
+      "path": "pages/me/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      },
+      "meta": {
+        "tabBar": true
+      }
+    },
+    {
+      "name": "scale",
+      "path": "pages/scale/list",
+      "style": {
+        "navigationBarTitleText": "量表"
+      },
+      "meta": {
+        "tabBar": true
+      }
+    },
+    {
+      "name": "scale",
+      "path": "pages/scale/scale",
+      "style": {
+        "navigationBarTitleText": "开始测试"
+      },
+      "meta": {}
+    },
+    {
+      "name": "scale",
+      "path": "pages/scale/question",
+      "style": {
+        "navigationBarTitleText": "答题"
+      },
+      "meta": {}
+    },
+    {
+      "name": "scale",
+      "path": "pages/scale/result",
+      "style": {
+        "navigationBarTitleText": "结果"
+      },
+      "meta": {}
+    },
+    {
+      "name": "scale",
+      "path": "pages/scale/result-list",
+      "style": {
+        "navigationBarTitleText": "评估记录"
+      },
+      "meta": {}
+    },
+    {
+      "name": "statistics",
+      "path": "pages/statistics/index",
+      "style": {
+        "navigationBarTitleText": "统计"
+      },
+      "meta": {}
+    }
+  ],
+
+  "requiredBackgroundModes": ["audio"],
+  "requiredPrivateInfos": ["chooseAddress"],
+
+  "subPackages": [
+    {
+      "root": "page_report",
+      "pages": [
+        {
+          "name": "report",
+          "path": "report/index",
+          "style": {
+            "navigationBarTitleText": "报告"
+          },
+          "meta": {}
+        },
+        {
+          "name": "monitor",
+          "path": "monitor/index",
+          "style": {
+            "navigationStyle": "custom"
+          },
+          "meta": {}
+        },
+
+        {
+          "name": "halo",
+          "path": "halo/index",
+          "style": {
+            "navigationStyle": "custom"
+          },
+          "meta": {}
+        }
+      ]
+    }
+  ],
+
+  "preloadRule": {
+    "pages/home/index": {
+      "network": "all",
+      "packages": ["page_report"]
+    }
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "uni-app",
+    "navigationBarBackgroundColor": "#fff",
+    "backgroundColor": "#fff",
+    "navigationStyle": "default",
+    "renderingMode": "seperated",
+    "pageOrientation": "portrait"
+  },
+  "tabBar": {
+    "color": "#94a3b8",
+    "selectedColor": "#020617",
+    "backgroundColor": "#fff",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "iconPath": "static/images/tabBar/home.png",
+        "text": "首页",
+        "selectedIconPath": "static/images/tabBar/home_s.png"
+      },
+      {
+        "pagePath": "pages/scale/list",
+        "iconPath": "static/images/tabBar/scale.png",
+        "text": "量表",
+        "selectedIconPath": "static/images/tabBar/scale_s.png"
+      },
+      {
+        "pagePath": "pages/me/index",
+        "iconPath": "static/images/tabBar/me.png",
+        "text": "我的",
+        "selectedIconPath": "static/images/tabBar/me_s.png"
+      }
+    ]
+  }
+}
