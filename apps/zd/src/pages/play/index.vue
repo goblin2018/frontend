@@ -19,6 +19,9 @@ const trainStore = useTrainStore()
 const freeStore = useFreeStore()
 const groupStore = useGroupStore()
 
+// 获取 back_blocker 组件引用
+const backBlockerRef = ref()
+
 onShow(() => {
   if (!trainStore.isFree) {
     // audioManager.seek(audioStore.currentTime)
@@ -40,6 +43,11 @@ onUnload(() => {
 
 // 停止训练
 function stopTrain() {
+  // 清理interval
+  if (timeInterval.value) {
+    clearInterval(timeInterval.value)
+    timeInterval.value = null
+  }
   trainStore.donePlay()
   audioManager.stop()
   audioStore.reset()
@@ -50,7 +58,8 @@ function stopTrain() {
 function donePlay() {
   trainStore.donePlay()
   audioStore.playing = false
-  showDone.value = true
+  // 调用 back_blocker 的方法显示训练完成弹窗
+  backBlockerRef.value?.showTrainCompleted()
 }
 
 audioManager.onEnded(() => {
@@ -199,35 +208,12 @@ const info = computed(() => {
   }
 })
 
-function gotoReport() {
-  uni.redirectTo({
-    url: '/page_report/report/index',
-  })
-}
-
 // watch(
 //   () => [trainStore.train_tmp.curr_relax, trainStore.train_tmp.curr_focus],
 //   (relax) => {
 //     console.log('relax, focus', relax)
 //   },
 // )
-
-const showDone = ref(false)
-
-function closeShowDone() {
-  showDone.value = false
-}
-
-function exitDirectly() {
-  closeShowDone()
-  trainStore.exitDirectly = true
-  setTimeout(() => {
-    uni.navigateBack()
-    setTimeout(() => {
-      trainStore.reset()
-    }, 100)
-  }, 150)
-}
 
 const timeInterval = ref<number | null>(null)
 const focusData = ref<number[]>([])
@@ -279,21 +265,7 @@ const bleStore = useBleStore()
         <view class="text-slate-50 text-24px">{{ groupStore.music?.name }}</view>
         <Ble class="box-border"></Ble>
       </view>
-      <Back_blocker @stop-train="stopTrain" />
-
-      <popup :open="showDone" @close="closeShowDone" title="训练完成">
-        <view class="px-2 py-4 flex flex-col items-center">
-          <image src="/static/images/brainx-black.png" class="w-120 h-120 mb-2" />
-          <view class="text-slate-800 mb-0.5">训练完成，点击查看报告</view>
-          <view class="flex items-center">
-            <image src="/static/svg/clock-black.svg" class="w-24 h-24 mr-0.5" />
-            <view class="text-slate-500">练习时长{{ formatLen(trainStore.train?.total_len) }}</view>
-          </view>
-
-          <buttonx class="w-full mt-8 mb-1" class-name="bg-slate-950 text-white" @click="gotoReport">查看报告</buttonx>
-          <buttonx class="w-full mb-2" class-name="bg-slate-200 text-slate-950" @click="exitDirectly">不保存，退出</buttonx>
-        </view>
-      </popup>
+      <Back_blocker ref="backBlockerRef" @stop-train="stopTrain" />
       <!--  -->
       <view class="flex flex-col items-center justify-center box-border px-3">
         <view

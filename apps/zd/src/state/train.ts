@@ -4,10 +4,13 @@ import { useUserStore } from './user'
 import dayjs from 'dayjs'
 import type { SensorData } from '@/lib/ble'
 import type { Music } from '@/types/music'
+import { calcFlow, calculateStandardDeviation, calcFocusStatistics } from '@/utils/trainCalculator'
+import { postx } from '@/lib/http'
+import { getAiReport, selectExperience } from '@/types/train'
 
 // 计算走神
 // 连续 10s 专注度平均值 < 40 时,认为是走神
-const distract_threshold = 80
+const distract_threshold = 30
 export const min_report_len = 60
 
 interface TrainState {
@@ -22,6 +25,14 @@ interface TrainState {
   exitDirectly: boolean
   play_at: number
   report?: Train
+  // 上传相关状态
+  uploadStatus: 'idle' | 'uploading' | 'processing' | 'success' | 'failed'
+  uploadProgress: number
+  uploadError?: string
+  hasUploaded: boolean
+  // 练习体验选择状态
+  selectedExperience: string
+  experienceLoading: boolean
 }
 
 interface TrainTmp {
@@ -30,30 +41,6 @@ interface TrainTmp {
   data: TrainFileInfo
   // 计算走神的起始点
   distraction_start_point: number
-
-  // sum: number
-  // theta_sum: number
-  // delta_sum: number
-  // l_gamma_sum: number
-  // l_beta_sum: number
-  // l_aplha_sum: number
-  // h_gamma_sum: number
-  // h_beta_sum: number
-  // h_aplha_sum: number
-
-  zen1_curr_duration: number
-  zen2_curr_duration: number
-  zen3_curr_duration: number
-  zen1_max_duration: number
-  zen2_max_duration: number
-  zen3_max_duration: number
-
-  flow1_curr_duration: number
-  flow1_max_duration: number
-  flow2_curr_duration: number
-  flow2_max_duration: number
-  flow3_curr_duration: number
-  flow3_max_duration: number
 }
 
 const initTrainTmp: TrainTmp = {
@@ -81,29 +68,6 @@ const initTrainTmp: TrainTmp = {
     h_gamma_max: 0,
     distraction_points: [],
   },
-  // sum: 0,
-  // theta_sum: 0,
-  // delta_sum: 0,
-  // l_gamma_sum: 0,
-  // l_beta_sum: 0,
-  // l_aplha_sum: 0,
-  // h_gamma_sum: 0,
-  // h_beta_sum: 0,
-  // h_aplha_sum: 0,
-
-  zen1_curr_duration: 0,
-  zen2_curr_duration: 0,
-  zen3_curr_duration: 0,
-  zen1_max_duration: 0,
-  zen2_max_duration: 0,
-  zen3_max_duration: 0,
-
-  flow1_curr_duration: 0,
-  flow1_max_duration: 0,
-  flow2_curr_duration: 0,
-  flow2_max_duration: 0,
-  flow3_curr_duration: 0,
-  flow3_max_duration: 0,
 }
 
 const initTrain: Train = {
@@ -113,12 +77,6 @@ const initTrain: Train = {
   free_len: 0,
   start_at: 0,
   len: 0,
-  zen1: 0,
-  zen2: 0,
-  zen3: 0,
-  flow1: 0,
-  flow2: 0,
-  flow3: 0,
   relax_total: 0,
   distracted_count: 0,
   relax_min: 0,
@@ -131,8 +89,7 @@ const initTrain: Train = {
   data_file: '',
 }
 
-export const useTrainStore = defineStore({
-  id: 'train',
+export const useTrainStore = defineStore('train', {
   state: (): TrainState => ({
     exitDirectly: false,
     view_only: false,
@@ -144,16 +101,21 @@ export const useTrainStore = defineStore({
     training: false,
     play_at: 0,
     report: undefined,
+    // 上传相关状态初始化
+    uploadStatus: 'idle',
+    uploadProgress: 0,
+    uploadError: undefined,
+    hasUploaded: false,
+    // 练习体验选择状态初始化
+    selectedExperience: '',
+    experienceLoading: false,
   }),
   getters: {
     started: (state) => {
       return state.train && state.train.start_at > 0
     },
-    // canUpload(state) {
-    //   return state.report != undefined && state.report.total_len >= min_report_len
-    // },
-    canUploadFile(state) {
-      return state.report != undefined && state.report.len >= min_report_len
+    canUploadFile: (state) => {
+      return state.report && state.report.len >= min_report_len
     },
   },
   actions: {
@@ -162,7 +124,7 @@ export const useTrainStore = defineStore({
       console.log('train play ', this.play_at)
     },
     pause() {
-      var len = 0
+      let len = 0
       if (this.train && this.play_at > 0) {
         len = dayjs().unix() - this.play_at
         this.play_at = 0
@@ -172,6 +134,18 @@ export const useTrainStore = defineStore({
     },
     donePlay() {
       console.log('done play ', this.train?.total_len)
+      console.log('donePlay hasUploaded:', this.hasUploaded)
+      console.log('donePlay current report.id:', this.report?.id)
+
+      // 如果已经上传过（有id），则不要重新设置report，避免覆盖服务器返回的数据
+      if (this.hasUploaded && this.report?.id) {
+        console.log('已上传，跳过donePlay的report设置')
+        this.pause()
+        this.training = false
+        this.view_only = false
+        return
+      }
+
       this.pause()
       this.training = false
       this.view_only = false
@@ -190,27 +164,29 @@ export const useTrainStore = defineStore({
           start_at: report.start_at,
           len: report.len,
         }
-      } else {
+
         report.tmp_data = this.train_tmp.data
-
-        // report.delta = this.train_tmp.delta_sum / this.train_tmp.sum
-        // report.theta = this.train_tmp.theta_sum / this.train_tmp.sum
-
-        // report.l_alpha = this.train_tmp.l_aplha_sum / this.train_tmp.sum
-        // report.h_alpha = this.train_tmp.h_aplha_sum / this.train_tmp.sum
-        // report.l_beta = this.train_tmp.l_beta_sum / this.train_tmp.sum
-        // report.h_beta = this.train_tmp.h_beta_sum / this.train_tmp.sum
-        // report.l_gamma = this.train_tmp.l_gamma_sum / this.train_tmp.sum
-        // report.h_gamma = this.train_tmp.h_gamma_sum / this.train_tmp.sum
-
-        report.zen1 = this.train_tmp.zen1_max_duration
-        report.zen2 = this.train_tmp.zen2_max_duration
-        report.zen3 = this.train_tmp.zen3_max_duration
-
-        report.flow1 = this.train_tmp.flow1_max_duration
-        report.flow2 = this.train_tmp.flow2_max_duration
-        report.flow3 = this.train_tmp.flow3_max_duration
+        this.report = report // ← 确保设置 report，即使时长不够
+        return
       }
+
+      // 正常计算结果
+      const flowResult = calcFlow(this.train_tmp.data)
+      if (flowResult) {
+        report.flowStar = flowResult.star
+        report.flowDuration = flowResult.duration
+        report.flowStartTime = flowResult.startTime
+        report.flowEndTime = flowResult.endTime
+      }
+
+      // 计算专注度和放松度的标准差
+      report.focusFluctuation = calculateStandardDeviation(this.train_tmp.data.focus)
+      report.relaxFluctuation = calculateStandardDeviation(this.train_tmp.data.relax)
+
+      // 计算专注度统计
+      report.focusStatistics = calcFocusStatistics(this.train_tmp.data.focus, report.len)
+
+      report.tmp_data = this.train_tmp.data
 
       this.report = report
     },
@@ -226,6 +202,14 @@ export const useTrainStore = defineStore({
       this.view_only = false
       this.exitDirectly = false
       this.is_distracted = false
+      // 重置上传状态
+      this.uploadStatus = 'idle'
+      this.uploadProgress = 0
+      this.uploadError = undefined
+      this.hasUploaded = false
+      // 重置练习体验选择状态
+      this.selectedExperience = ''
+      this.experienceLoading = false
     },
     startTrain(music: Music) {
       this.reset()
@@ -238,10 +222,6 @@ export const useTrainStore = defineStore({
         start_at: dayjs().unix(),
       }
       this.training = true
-    },
-
-    setTip(tip: string) {
-      this.report!.tip = tip
     },
 
     startFreeTrain() {
@@ -267,82 +247,6 @@ export const useTrainStore = defineStore({
       if (!this.training) {
         return
       }
-
-      let zen1 = false
-      let zen2 = false
-      let zen3 = false
-      let flow1 = false
-      let flow2 = false
-      let flow3 = false
-      if (s.focus > 60) {
-        this.train.focus_total! += 1
-      }
-
-      if (s.relax > 60) {
-        this.train.relax_total! += 1
-      }
-      // zen
-      if (s.focus >= 50 && s.relax >= 50) {
-        zen1 = true
-        zen2 = true
-        zen3 = true
-        flow1 = true
-        flow2 = true
-        flow3 = true
-      } else if (s.focus >= 40 && s.relax >= 40) {
-        zen1 = true
-        zen2 = true
-        flow1 = true
-        flow2 = true
-        flow3 = true
-      } else if (s.focus >= 30 && s.relax >= 30) {
-        zen1 = true
-        flow1 = true
-        flow2 = true
-        flow3 = true
-      }
-
-      if (zen1) {
-        this.train_tmp.zen1_curr_duration += 1
-        this.train_tmp.zen1_max_duration = Math.max(this.train_tmp.zen1_curr_duration, this.train_tmp.zen1_max_duration)
-      } else {
-        this.train_tmp.zen1_curr_duration = 0
-      }
-
-      if (zen2) {
-        this.train_tmp.zen2_curr_duration += 1
-        this.train_tmp.zen2_max_duration = Math.max(this.train_tmp.zen2_curr_duration, this.train_tmp.zen2_max_duration)
-      } else {
-        this.train_tmp.zen2_curr_duration = 0
-      }
-
-      if (zen3) {
-        this.train_tmp.zen3_curr_duration += 1
-        this.train_tmp.zen3_max_duration = Math.max(this.train_tmp.zen3_curr_duration, this.train_tmp.zen3_max_duration)
-      } else {
-        this.train_tmp.zen3_curr_duration = 0
-      }
-
-      // if (flow1) {
-      //   this.train_tmp.flow1_curr_duration += 1
-      //   this.train_tmp.flow1_max_duration = Math.max(this.train_tmp.flow1_curr_duration, this.train_tmp.flow1_max_duration)
-      // } else {
-      //   this.train_tmp.flow1_curr_duration = 0
-      // }
-
-      // if (flow2) {
-      //   this.train_tmp.flow2_curr_duration += 1
-      //   this.train_tmp.flow2_max_duration = Math.max(this.train_tmp.flow2_curr_duration, this.train_tmp.flow2_max_duration)
-      // } else {
-      //   this.train_tmp.flow2_curr_duration = 0
-      // }
-
-      // if (flow3) {
-      //   this.train_tmp.flow3_curr_duration += 1
-      //   this.train_tmp.flow3_max_duration = Math.max(this.train_tmp.flow3_curr_duration, this.train_tmp.flow3_max_duration)
-      // } else {
-      //   this.train_tmp.flow3_curr_duration = 0
-      // }
 
       // 第一次加入数据
       if (this.train.len === 0) {
@@ -402,15 +306,7 @@ export const useTrainStore = defineStore({
 
       this.train_tmp.curr_focus = s.focus
       this.train_tmp.curr_relax = s.relax
-      // this.train_tmp.sum += total(s)
-      // this.train_tmp.theta_sum += s.theta
-      // this.train_tmp.delta_sum += s.delta
-      // this.train_tmp.l_aplha_sum += s.lowAlpha
-      // this.train_tmp.l_beta_sum += s.lowBeta
-      // this.train_tmp.l_gamma_sum += s.lowGamma
-      // this.train_tmp.h_gamma_sum += s.highGamma
-      // this.train_tmp.h_aplha_sum += s.highAlpha
-      // this.train_tmp.h_beta_sum += s.highBeta
+
       this.train.len += 1
       console.log('train len', this.train.len)
 
@@ -432,6 +328,138 @@ export const useTrainStore = defineStore({
       if (!ok) {
         this.train_tmp.curr_relax = 0
         this.train_tmp.curr_focus = 0
+      }
+    },
+
+    // 统一的上传逻辑
+    async uploadReport(): Promise<{ success: boolean; error?: string; alreadyUploaded?: boolean }> {
+      // 如果已经上传过或者不满足上传条件，直接返回成功
+      if (this.hasUploaded || !this.canUploadFile) {
+        return { success: true, alreadyUploaded: true }
+      }
+
+      try {
+        this.uploadStatus = 'uploading'
+        this.uploadProgress = 0
+        this.uploadError = undefined
+
+        // 1. 上传训练数据文件
+        const jsonStr = JSON.stringify(this.report?.tmp_data)
+        // const path = wx.env.USER_DATA_PATH + '/tmp.json'
+        // wx.getFileSystemManager().writeFileSync(path, jsonStr)
+
+        // const userStore = useUserStore()
+        // const file = await uploadFile(path, `mindsensor/train/${userStore.user?.id}`, (progress) => {
+        //   this.uploadProgress = Math.round(progress)
+        // })
+
+        // this.uploadStatus = 'processing'
+
+        // 2. 准备上传的数据
+
+        // 3. 提交训练结果
+        const res = await postx<Train>('api/train', { ...this.report, tmpData: jsonStr, version: 2 })
+        console.log('uploadReport resxxxxxx', res, 'xxxxxxx')
+
+        this.uploadStatus = 'success'
+        this.hasUploaded = true
+
+        // 添加调试信息，确认 this 指向和数据设置
+        console.log('Before setting report, this.report:', this.report)
+        console.log('res.data:', res.data)
+        console.log('uploadReport store实例:', this)
+        console.log('uploadReport store.$id:', this.$id)
+
+        this.report = { ...res.data, tmp_data: this.report.tmp_data }
+
+        console.log('After setting report, this.report:', this.report)
+        console.log('this.report.id:', this.report?.id)
+
+        // 确保响应式更新完成
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        return { success: true }
+      } catch (error: any) {
+        this.uploadStatus = 'failed'
+        this.uploadError = error.message || '上传失败'
+        return { success: false, error: this.uploadError }
+      }
+    },
+
+    // 重置上传状态
+    resetUploadStatus() {
+      this.uploadStatus = 'idle'
+      this.uploadProgress = 0
+      this.uploadError = undefined
+    },
+
+    async getAiReport() {
+      console.log('getAiReport', this.report.id)
+      if (!this.report?.id) {
+        return null
+      }
+
+      try {
+        const aiReport = await getAiReport(this.report.id)
+        if (aiReport) {
+          this.report.aiReport = aiReport
+          return aiReport
+        }
+
+        return null
+      } catch (error: any) {
+        return null
+      }
+    },
+
+    // 选择练习体验
+    async selectPracticeExperience(value: string): Promise<{ success: boolean; error?: string }> {
+      // 防止重复选择或正在加载
+      if (this.selectedExperience === value || this.experienceLoading) {
+        return { success: true }
+      }
+
+      // 调试信息：检查 report 状态
+      console.log('selectPracticeExperience - report:', this.report)
+      console.log('selectPracticeExperience - report.id:', this.report?.id)
+      console.log('selectPracticeExperience - hasUploaded:', this.hasUploaded)
+
+      // 如果报告还没有ID（未上传），则只更新本地状态，不调用API
+      if (!this.report?.id) {
+        console.log('报告未上传，仅更新本地状态')
+        this.selectedExperience = value
+
+        // 更新report中的数据
+        if (this.report) {
+          this.report.practiceExperience = value
+        }
+
+        return { success: true }
+      }
+
+      try {
+        this.experienceLoading = true
+
+        // 调用后端接口记录选择
+        await selectExperience({
+          id: this.report.id,
+          practiceExperience: value,
+        })
+
+        // API调用成功，更新本地状态
+        this.selectedExperience = value
+
+        // 更新report中的数据
+        if (this.report) {
+          this.report.practiceExperience = value
+        }
+
+        return { success: true }
+      } catch (error: any) {
+        console.error('选择练习体验失败:', error)
+        return { success: false, error: error.message || '选择失败' }
+      } finally {
+        this.experienceLoading = false
       }
     },
   },

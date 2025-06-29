@@ -35,7 +35,6 @@ function getPhone({ detail }) {
     return
   }
 
-
   postx<User>('api/user/login', {
     code,
   }).then((res) => {
@@ -49,8 +48,11 @@ function getPhone({ detail }) {
         url: '/pages/home/index',
       })
     } else {
+      console.log('登录失败', res)
+
       // 失败
       uni.showToast({
+        icon: 'error',
         title: '登录失败: ' + res.msg,
       })
     }
@@ -65,15 +67,11 @@ function openPrivacyContract() {
   wx.openPrivacyContract({})
 }
 
-
-
 function clickPhone() {
   if (appStore.needAuth) {
     requireAuth()
   }
 }
-
-
 </script>
 
 <template>
@@ -84,7 +82,9 @@ function clickPhone() {
   <view class="fixed bottom-32 w-full">
     <view class="px-2">
       <buttonx v-if="appStore.needAuth" class="" class-name=" text-white" bg="#61b15a" shape="round" @click="clickPhone">微信一键登录</buttonx>
-      <buttonx v-else class="" class-name=" text-white" bg="#61b15a" shape="round" open-type="getPhoneNumber" @getphonenumber="getPhone">手机号一键登录</buttonx>
+      <buttonx v-else class="" class-name=" text-white" bg="#61b15a" shape="round" open-type="getPhoneNumber" @getphonenumber="getPhone"
+        >手机号一键登录</buttonx
+      >
       <view class="flex items-center mt-2" @click="requireAuth">
         <view
           class="box-border w-20 h-20 border border-solid border-black/20 rounded-full mr-1 p-2rpx"

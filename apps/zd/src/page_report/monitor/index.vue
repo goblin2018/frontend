@@ -2,8 +2,8 @@
   <Page :extra-height="96" class="" title="实时监测">
     <LoginPopup :open="showLogin" @close="closeLogin"></LoginPopup>
 
-    <template #main class="p-2 relative">
-      <Back_blocker :can-upload="trainStore.train?.len! >= min_report_len" @go-back="goBack" @toReport="gotoReport"></Back_blocker>
+    <template #main>
+      <Back_blocker :can-upload="trainStore.train?.len! >= min_report_len" @go-back="goBack"></Back_blocker>
 
       <view class="h-72 flex items-center justify-between">
         <view class="flex items-baseline">
@@ -144,12 +144,7 @@ const focusPercent = computed(() => {
   return Math.round((trainStore.train!.focus_total! * 100) / trainStore.train!.len)
 })
 
-function gotoReport() {
-  trainStore.donePlay()
-  uni.redirectTo({
-    url: '/page_report/report/index',
-  })
-}
+// gotoReport 现在由 Back_blocker 组件处理，不需要在这里实现
 
 function goBack() {
   setTimeout(() => {

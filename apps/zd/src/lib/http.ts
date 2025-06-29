@@ -35,6 +35,8 @@ export const interceptor = () => {
 
         // TODO 处理 token 过期 以及 用户会员过期的问题
         if (args.data.code !== 200) {
+          // 处理错误响应
+          console.log('API响应错误:', args.data)
         }
       }
     },
@@ -54,7 +56,7 @@ interface Request {
 }
 
 interceptor()
-export const getx = <T>(url: string, req: Request = {}, showLoading: boolean = true) => {
+export const getx = <T>(url: string, req: Request = {}, showLoading: boolean = true, timeout: number = 10000) => {
   if (showLoading) {
     uni.showLoading({
       title: '加载中...',
@@ -65,6 +67,7 @@ export const getx = <T>(url: string, req: Request = {}, showLoading: boolean = t
       url: url,
       method: 'GET',
       data: req,
+      timeout,
       success: (res: any) => {
         if (res.statusCode === 200) {
           resolve(res.data.data)
@@ -72,7 +75,9 @@ export const getx = <T>(url: string, req: Request = {}, showLoading: boolean = t
           reject(res)
         }
       },
-
+      fail: (err: any) => {
+        reject(err)
+      },
       complete: () => {
         if (showLoading) {
           uni.hideLoading()

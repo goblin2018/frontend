@@ -67,8 +67,8 @@ function getPhone({ detail }) {
   postx<User>('api/user/login', {
     org: 'zd',
     code,
-  }).then((res) => {
-    if (res.data) {
+  })
+    .then((res) => {
       userStore.setUser(res.data)
       console.log('登录成功', res.data)
       uni.showToast({
@@ -80,18 +80,14 @@ function getPhone({ detail }) {
           // 处理 登录成功
           userStore.wxLogin(code)
         },
-
-        fail(err) {
-          console.log(err)
-        },
       })
-    } else {
-      // 失败
+    })
+    .catch((err) => {
       uni.showToast({
-        title: '登录失败: ' + res.msg,
+        icon: 'error',
+        title: '当前手机号不可用',
       })
-    }
-  })
+    })
 
   console.log(iv, code, encryptedData)
 

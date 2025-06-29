@@ -1,5 +1,4 @@
-export const usePopupStore = defineStore({
-  id: 'popup',
+export const usePopupStore = defineStore('popup', {
   state: () => ({
     show: false,
   }),

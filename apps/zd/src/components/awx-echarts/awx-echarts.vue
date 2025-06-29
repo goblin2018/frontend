@@ -2,7 +2,7 @@
 <template>
   <view v-show="popupStore.show" class="ec-canvas"></view>
   <canvas
-    v-show="!popupStore.show"
+    v-show="!popupStore.show && !hide"
     type="2d"
     class="ec-canvas"
     :id="canvasId"
@@ -191,6 +191,19 @@ onMounted(() => {
     init()
   }
 })
+
+// 监听 hide 属性变化，当图表从隐藏变为显示时重新初始化
+watch(
+  () => props.hide,
+  (newHide, oldHide) => {
+    // 当从隐藏变为显示时，重新初始化
+    if (oldHide && !newHide && !props.lazyLoad) {
+      nextTick(() => {
+        init()
+      })
+    }
+  },
+)
 </script>
 
 <style scoped>

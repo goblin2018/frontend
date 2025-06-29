@@ -109,16 +109,6 @@ const createOption = (data: number[]) => {
       splitLine: { show: false },
       // interval: maxValue / 2,
     },
-    dataZoom: props.showZoom
-      ? [
-          {
-            type: 'slider', // 滑动条
-            start: 0, // 默认起始位置为0%
-            end: 100, // 默认结束位置为20%
-            showDetail: false, // 不显示详细信息（缩放百分比）
-          },
-        ]
-      : [],
     series: [
       {
         name: props.name,
@@ -146,7 +136,9 @@ const initChart = (e: any) => {
   try {
     const option = createOption(props.value)
     chartInstance.setOption(option)
-  } catch (error) {}
+  } catch (error) {
+    /* empty */
+  }
 
   return chartInstance
 }

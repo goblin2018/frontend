@@ -1,62 +1,58 @@
 <template>
-  <view class="relative bg-white min-h-screen px-2 box-border">
-    <view class="flex items-center justify-between">
+  <view class="relative bg-slate-50 min-h-screen px-2 box-border pt-2">
+    <view class="flex items-center justify-between mb-2">
       <LogoInfo theme="light" />
-      <view class="w-48px h-48px flex items-center justify-center translate-x-14px" @click="showShare">
-        <image src="/static/svg/share-black.svg" class="w-24 h-24" />
+      <view class="h-48px flex items-center justify-center" @click="showShare">
+        <image src="/static/svg/share-black.svg" class="w-16px h-16px mr-1" />
+        <text class="text-slate-500 text-sm">分享</text>
       </view>
     </view>
 
-    <view v-if="trainStore.canUploadFile" class="flex flex-col items-center pb-88px">
-      <image :src="mindfulImg" class="w-259px h-193px py-5" />
-      <view class="text-center break-all text-slate-950 px-2"> "{{ result.tip }}" </view>
+    <!-- 没有数据时的显示 -->
+    <view v-if="!result" class="pt-[100px] pb-[44px]">
+      <Empty title="暂无数据" subtitle="请先完成练习或查看历史记录" />
     </view>
 
-    <Empty v-else class="pt-100px pb-44px box-border" title="此次练习结果不上传" subtitle="练习时长小于60s" />
+    <!-- 有数据但时长不够的显示 -->
+    <view v-else-if="!canUploadFile" class="pt-[100px] pb-[44px]">
+      <Empty title="此次练习结果不上传" subtitle="练习时长小于60s" />
+    </view>
 
-    <TrainDesc :train="result" class="" />
-    <view class="h-16px"></view>
-    <view class="pb-15 box-border" v-if="trainStore.canUploadFile">
-      <!--   专注力 -->
-      <Focus_relax_info
-        class-name="bg-slate-100 rounded-xl p-1"
-        title="eSense专注指数"
-        color1="#14B8A6"
-        color2="#F59E0B"
-        color3="#3B82F6"
-        :percent="focusPercent"
-        :max="result.focus_max"
-        :min="result.focus_min"
-        :avg="result.focus_avg"
-        show-min-max
-        class="mb-2"
-      >
-        <FocusPopupInfo />
-      </Focus_relax_info>
+    <TrainDesc v-if="result" :train="result" class="" />
+    <view class="mt-2" v-if="canUploadFile">
+      <view class="py-2 px-1.5 bg-blue-50 rounded-xl box-border">
+        <FocusAvg :value="result.focus_avg" :last-value="result.focus_avg" />
 
-      <Focus_relax_info
-        class="mb-2"
-        class-name="bg-slate-100 rounded-xl p-1"
-        title="eSense放松指数"
-        color1="#14B8A6"
-        color2="#F59E0B"
-        color3="#3B82F6"
-        :percent="relaxPercent"
-        :max="result.relax_max"
-        :min="result.relax_min"
-        :avg="result.relax_avg"
-        show-min-max
-      >
-        <RelaxPopupInfo />
-      </Focus_relax_info>
+        <view class="h-20"></view>
 
-      <Distraction_info class="mb-2" class-name="bg-slate-100 rounded-xl p-1" :count="result.distracted_count"></Distraction_info>
+        <FlowStar :flow="result.flowStar || 0" :start-at="result.flowStartTime" :end-at="result.flowEndTime" />
 
-      <sequence_curve :disable-touch="false" class-name="bg-slate-100 rounded-xl p-1" :focus="result.tmp_data?.focus" :relax="result.tmp_data?.relax" />
+        <view class="h-40"></view>
 
-      <band_info class="" theme="light" :result="result.tmp_data"></band_info>
-      <view class="h-16"></view>
-      <Mindfulness_info :star="zen_star"></Mindfulness_info>
+        <FocusStatistics :focus-info="result.focusStatistics" />
+
+        <FocusCurve :value="result.tmp_data?.focus" canvas-id="focus-curve" color="#14B8A6" name="专注力" />
+
+        <FocusDescGroup :max-value="result.focus_max" :avg-value="result.focus_avg" :fluctuation="result.focusFluctuation" />
+
+        <Distraction_info :distraction-count="((result.distracted_count || 0) * 60) / result.len"></Distraction_info>
+        <MoreInfo :result="result" />
+      </view>
+
+      <AiReport :report="result.aiReport" :loading="aiReportLoading" :failed="aiReportFailed" />
+
+      <view class="h-40"></view>
+
+      <PraticeExperience
+        :value="trainStore.report.practiceExperience"
+        @onSelect="selectPraticeExperience"
+        :loading="trainStore.experienceLoading"
+        :view-only="trainStore.view_only"
+      />
+
+      <view class="h-160"></view>
+
+      <view></view>
     </view>
 
     <popup title="分享" :open="shareOpen" @close="closeShare">
@@ -90,7 +86,7 @@
       </view>
     </popup>
 
-    <view class="h-80 bg-white box-border absolute bottom-0 left-0 w-full px-2">
+    <view class="h-68 bg-white box-border absolute bottom-0 left-0 w-full px-2">
       <buttonx class-name="bg-slate-200 text-slate-950" @click="goBack"> 返回 </buttonx>
     </view>
   </view>
@@ -101,42 +97,44 @@ import Empty from '@/components/business/empty.vue'
 import LogoInfo from '@/components/business/logo-info.vue'
 import buttonx from '@/components/buttonx.vue'
 import popup from '@/components/popup.vue'
-import sequence_curve from '@/components/sequence_curve.vue'
-import { postx } from '@/lib/http'
-import { uploadFile } from '@/lib/oss'
-import { formatLen } from '@/lib/time'
+import FocusCurve from './curve2.vue'
+import FocusStatistics from './focus-statistics.vue'
+import MoreInfo from './more-info.vue'
+
 import { getOne } from '@/page_report/components/tip'
-import { useTrainStore } from '@/state/train'
+import { min_report_len, useTrainStore } from '@/state/train'
 import { useUserStore } from '@/state/user'
-import type { Train } from '@/types/train'
-import dayjs from 'dayjs'
-import { drawCenterText, drawImage, drawLogoInfo, drawUserInfo } from '../components/draw'
 import { saveCanvas, startShare } from '../components/share'
-import band_info from './band_info.vue'
-import Distraction_info from './distraction_info.vue'
-import FocusPopupInfo from './focus-popup-info.vue'
-import Focus_relax_info from './focus_relax_info.vue'
-import Mindfulness_info from './mindfulness_info.vue'
-import { mock } from './mock'
-import RelaxPopupInfo from './relax-popup-info.vue'
+import { drawShareCanvas } from '../components/share-canvas'
+import Distraction_info from './distraction_info2.vue'
+import FlowStar from './flow-star.vue'
+import FocusAvg from './focus-avg.vue'
+import FocusDescGroup from './focus-desc-group.vue'
 import TrainDesc from './train-desc.vue'
-onMounted(() => {})
+import AiReport from './ai-report.vue'
+import PraticeExperience from './pratice-experience.vue'
+
+onMounted(() => {
+  console.log('=== 报告页面 onMounted ===')
+  console.log('onMounted trainStore.report:', trainStore.report)
+  console.log('onMounted trainStore.report?.id:', trainStore.report?.id)
+  console.log('onMounted result.value:', result.value)
+  console.log('onMounted trainStore实例:', trainStore)
+  console.log('onMounted trainStore.$id:', trainStore.$id)
+})
 const trainStore = useTrainStore()
 const userStore = useUserStore()
 
-const relaxPercent = computed(() => {
-  if (result.value.len == 0) {
-    return 0
-  }
-  return Math.round((result.value.relax_total! * 100) / result.value.len)
+// AI报告本地状态管理
+const aiReportLoading = ref(false)
+const aiReportFailed = ref(false)
+
+const canUploadFile = computed(() => {
+  return result.value?.len && result.value.len >= min_report_len
 })
 
-const focusPercent = computed(() => {
-  if (result.value.len == 0) {
-    return 0
-  }
-  return Math.round((result.value.focus_total! * 100) / result.value.len)
-})
+// 获取练习体验加载状态
+
 // 修改计算弹窗最大高度
 const maxPopupHeight = uni.getWindowInfo().screenHeight - 340
 
@@ -159,144 +157,96 @@ async function save() {
   })
 }
 
+async function selectPraticeExperience(value: string) {
+  console.log('选择练习体验:', value)
+  await trainStore.selectPracticeExperience(value)
+}
+
+// 获取AI报告的本地方法
+async function fetchAiReport() {
+  console.log('fetchAiReport', result.value?.id)
+  if (!result.value?.id || aiReportLoading.value) {
+    return
+  }
+
+  try {
+    aiReportLoading.value = true
+    aiReportFailed.value = false
+
+    const aiReport = await trainStore.getAiReport()
+
+    if (aiReport) {
+      // AI报告获取成功，数据已经在store中更新到report.aiReport
+      console.log('AI报告获取成功:', aiReport)
+    } else {
+      aiReportFailed.value = true
+      console.log('AI报告获取失败')
+    }
+  } catch (error) {
+    aiReportFailed.value = true
+    console.error('获取AI报告失败:', error)
+  } finally {
+    aiReportLoading.value = false
+  }
+}
+
 async function showShare() {
   await startShare({
     onShare: async () => {
-      // TODO 打开弹窗 绘制图片
       // 打开弹窗
       shareOpen.value = true
       console.log('开始绘制预览图')
-      await drawShareCanvas()
+      await drawShareCanvas({
+        canvasId: 'shareCanvas',
+        width,
+        height,
+        result: result.value,
+        userAvatar: userStore.user?.avatar,
+        mindfulImg: mindfulImg.value,
+      })
     },
   })
 }
 
-async function drawShareCanvas() {
-  // TODO 绘制图片
-  console.log('开始绘制 canvas')
-  const ctx = uni.createCanvasContext('shareCanvas')
-  if (!ctx) {
-    console.error('创建 canvas context 失败')
-    return
-  }
-
-  // 设置图片平滑
-  // @ts-ignore
-  ctx.imageSmoothingEnabled = true
-  // @ts-ignore
-  ctx.imageSmoothingQuality = 'high'
-  ctx.setFillStyle('#F8FAFC')
-  ctx.fillRect(0, 0, width, height)
-
-  drawLogoInfo(ctx, { x: 16, y: 16 }, 'light') // 使用固定尺寸
-  if (userStore.user?.avatar) {
-    await drawUserInfo(ctx, { x: width - 40 - 16, y: 16 }, userStore.user.avatar) // 使用固定尺寸
-  }
-
-  await drawImage({ ctx, x: 34, y: 88, w: 259, h: 193, src: mindfulImg.value })
-
-  let tipInfo = result.value.tip
-  if (!tipInfo) {
-    const tip = await getOne()
-    tipInfo = tip.info
-  }
-  await drawCenterText({ ctx, y: 329, text: `"${tipInfo}"`, color: '#020617' })
-
-  // 绘制练习信息背景
-  const bgX = (width - 295) / 2 // 水平居中
-  const bgY = 465
-  ctx.fillStyle = '#fff'
-  // 绘制圆角矩形
-  const radius = 12
-  ctx.beginPath()
-  ctx.moveTo(bgX + radius, bgY)
-  ctx.lineTo(bgX + 295 - radius, bgY)
-  ctx.arcTo(bgX + 295, bgY, bgX + 295, bgY + radius, radius)
-  ctx.lineTo(bgX + 295, bgY + 128 - radius)
-  ctx.arcTo(bgX + 295, bgY + 128, bgX + 295 - radius, bgY + 128, radius)
-  ctx.lineTo(bgX + radius, bgY + 128)
-  ctx.arcTo(bgX, bgY + 128, bgX, bgY + 128 - radius, radius)
-  ctx.lineTo(bgX, bgY + radius)
-  ctx.arcTo(bgX, bgY, bgX + radius, bgY, radius)
-  ctx.closePath()
-  ctx.fill()
-
-  // 绘制练习信息文字
-  ctx.fillStyle = '#64748b' // text-slate-500
-  ctx.setFontSize(16) // 只在开始时设置一次字体大小
-  ctx.setTextAlign('left')
-
-  const textX = bgX + 12 // padding-left: 12px
-  const rightTextX = bgX + 295 - 12 // padding-right: 12px
-  let textY = bgY + 30 // 第一行文字位置
-
-  // 绘制练习内容
-  ctx.fillText('练习内容', textX, textY)
-  ctx.fillStyle = '#475569' // text-slate-950
-  ctx.setTextAlign('right')
-  ctx.font = '600 16px' // 只设置字重
-  ctx.fillText(result.value?.name || '', rightTextX, textY)
-
-  // 绘制练习时长
-  textY += 40 // gap-4 (16px) + line-height
-  ctx.setTextAlign('left')
-  ctx.fillStyle = '#64748b'
-  ctx.font = '16px' // 恢复正常字重
-  ctx.fillText('练习时长', textX, textY)
-  ctx.fillStyle = (result.value?.len || 0) < 60 ? '#f59e0b' : '#475569' // text-amber-500 : text-slate-950
-  ctx.setTextAlign('right')
-  ctx.font = '600 16px' // 只设置字重
-  ctx.fillText(formatLen(result.value?.len || 0, true), rightTextX, textY)
-
-  // 绘制练习时间
-  textY += 40
-  ctx.setTextAlign('left')
-  ctx.fillStyle = '#64748b'
-  ctx.font = '16px' // 恢复正常字重
-  ctx.fillText('练习时间', textX, textY)
-  ctx.fillStyle = '#475569'
-  ctx.setTextAlign('right')
-  ctx.font = '600 16px' // 只设置字重
-  ctx.fillText(dayjs.unix(result.value?.start_at || 0).format('YYYY/MM/DD HH:mm'), rightTextX, textY)
-
-  // 绘制底部图标
-  drawLogoInfo(ctx, { x: 119, y: height - 57 }, 'light')
-
-  // 最终绘制
-  await new Promise<void>((resolve) => {
-    ctx.draw(true, () => {
-      console.log('Canvas 绘制完成')
-      resolve()
-    })
-  })
-}
+//
 
 const result = computed(() => {
+  console.log('=== result computed 触发 ===')
+  console.log('trainStore.report:', trainStore.report)
+  console.log('trainStore.report?.id:', trainStore.report?.id)
+
   if (trainStore.report) {
+    console.log(trainStore.report, 'trainStore.reportxxxxx')
     return trainStore.report
   }
-  return mock.train as Train
+  // 如果没有数据，返回一个空的 Train 对象或者 null
+  // 你可以根据需要调整这里的处理
+  return null
 })
 
-console.log(result.value, 'result')
+console.log('初始 result.value:', result.value)
 
-const zen_star = computed(() => {
-  if (result.value.zen3! >= 60) {
+const flowStar = computed(() => {
+  if (!result.value?.flowStar) {
+    return 0
+  }
+
+  if (result.value.flowStar >= 3) {
     return 3
   }
 
-  if (result.value.zen2! >= 60) {
+  if (result.value.flowStar >= 2) {
     return 2
   }
 
-  if (result.value.zen1! >= 60) {
+  if (result.value.flowStar >= 1) {
     return 1
   }
   return 0
 })
 
 const mindfulImg = computed(() => {
-  switch (zen_star.value) {
+  switch (flowStar.value) {
     case 0:
       return 'https://mindsensor.oss-cn-shenzhen.aliyuncs.com/img/m0.png'
     case 1:
@@ -308,46 +258,36 @@ const mindfulImg = computed(() => {
   }
 })
 
-async function upoload() {
-  const jsonStr = JSON.stringify(trainStore.report?.tmp_data)
-  let path = wx.env.USER_DATA_PATH + '/tmp.json'
-  wx.getFileSystemManager().writeFileSync(path, jsonStr)
-
-  let res = await uploadFile(path, `mindsensor/train/${userStore.user?.id}`)
-  return res
-}
-
-// 进入页面之前上传
+// 页面展示时的处理 - 仅处理tip获取，不再处理上传
 onShow(async () => {
-  // 仅观看
-  if (trainStore.view_only) {
-    if (!trainStore.report?.tip) {
-      const tip = await getOne()
-      console.log(tip, 'tip')
+  console.log('onShow result.value:', result.value)
+  console.log('onShow trainStore.report:', trainStore.report)
+  console.log('onShow view_only:', trainStore.view_only)
+
+  // 仅观看模式或者还没有tip时，获取tip
+  if (trainStore.view_only && !trainStore.report?.tip) {
+    const tip = await getOne()
+    console.log(tip, 'tip')
+
+    // 安全的合并方式，确保不丢失现有数据
+    if (trainStore.report) {
       trainStore.report = { ...trainStore.report, tip: tip.info }
+    } else {
+      // 如果 report 为空，说明可能有问题，记录错误但不设置 tip
+      console.error('trainStore.report is null when trying to set tip')
     }
-    return
   }
 
-  let d = { ...result.value } as Train
-  delete d.tmp_data
-  if (trainStore.report?.user_id == '') {
-    return
+  // 初始化已选择的练习体验
+  if (result.value?.practiceExperience) {
+    trainStore.selectedExperience = result.value.practiceExperience
   }
-  // 上传训练数据
-  if (trainStore.canUploadFile) {
-    const file = await upoload()
-    d.data_file = file
-    console.log('上传训练数据')
-    let tip = await getOne()
-    d.tip = tip.info
-    trainStore.setTip(tip.info)
-    // 上传训练结果
-    postx('api/train', d).then(() => {
-      uni.showToast({
-        title: '上传成功',
-      })
-    })
+
+  console.log('result.value', canUploadFile.value, result.value?.id, !result.value?.aiReport, !aiReportLoading.value, !aiReportFailed.value)
+
+  // 检查是否需要获取AI报告
+  if (canUploadFile.value && result.value?.id && result.value?.version == 2 && !result.value?.aiReport && !aiReportLoading.value && !aiReportFailed.value) {
+    fetchAiReport()
   }
 })
 

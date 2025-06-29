@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 
-export const formatLen = (time?: number, useChinese = false): string => {
+export const formatLen = (time?: number, useChinese = false, useShort = false): string => {
   if (!time) {
     if (useChinese) {
       return '0秒'
@@ -12,13 +12,24 @@ export const formatLen = (time?: number, useChinese = false): string => {
   const minutes = Math.floor(time / 60)
   const seconds = Math.floor(time - minutes * 60)
 
-  let strs: string[] = []
+  const strs: string[] = []
   if (hour > 0) {
     strs.push(hour.toString())
   }
 
-  strs.push(minutes < 10 ? '0' + minutes : minutes.toString())
-  strs.push(seconds < 10 ? '0' + seconds : seconds.toString())
+  if (useShort) {
+    if (hour > 0 || minutes > 0) {
+      strs.push(minutes.toString())
+    }
+  } else {
+    strs.push(minutes < 10 ? '0' + minutes : minutes.toString())
+  }
+
+  if (useShort) {
+    strs.push(seconds.toString())
+  } else {
+    strs.push(seconds < 10 ? '0' + seconds : seconds.toString())
+  }
 
   if (useChinese) {
     if (strs.length == 1) {
@@ -50,8 +61,8 @@ export function formatRange(start_at?: number, end_at?: number) {
   if (!start_at || !end_at) {
     return ''
   }
-  let s = dayjs.unix(start_at)
-  let e = dayjs.unix(end_at)
+  const s = dayjs.unix(start_at)
+  const e = dayjs.unix(end_at)
 
   if (s.isSame(e, 'day')) {
     return s.format('YYYY/MM/DD HH:mm') + ' - ' + e.format('HH:mm')

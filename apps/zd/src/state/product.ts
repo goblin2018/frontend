@@ -1,4 +1,4 @@
-import { BaseProductCategory, listBaseProducts, type BaseProduct } from '@/types/base_product'
+import { listBaseProducts, type BaseProduct } from '@/types/base_product'
 import type { SimpleProduct } from '@/types/simple_product'
 import { defineStore } from 'pinia'
 
@@ -39,8 +39,7 @@ export const product_sensor: SimpleProduct = {
   price: 0,
 }
 
-export const useProductStore = defineStore({
-  id: 'product',
+export const useProductStore = defineStore('product', {
   state: (): ProductState => ({
     order_open: false,
     items: [],
