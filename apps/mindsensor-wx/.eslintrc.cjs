@@ -26,8 +26,8 @@ module.exports = {
     indent: ['error', 2, { SwitchCase: 1 }], //代码缩进2个空格
     // semi: ['error', 'always'], //行尾需要有分号
     quotes: ['error', 'single'], //强制使用一致的反勾号、双引号或单引号
-    'linebreak-style': ['error', 'windows'], //强制使用一致的换行风格,"unix"：\n 表示 LF , "windows"：\r\n 表示 CRLF
-    eqeqeq: ['error', 'always', { null: 'ignore' }], //比较时强制使用 === 或者 !==,但对null作比较时可以不用全等
+    'linebreak-style': ['error', 'unix'], //强制使用一致的换行风格,"unix"：\n 表示 LF , "windows"：\r\n 表示 CRLF
+    eqeqeq: 'off', //允许使用 == 和 !=
     'no-unused-vars': 'off',
 
     '@typescript-eslint/no-explicit-any': 'off', //不允许任何类型

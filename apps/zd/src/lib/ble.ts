@@ -36,9 +36,8 @@ export function authorizeBle(cb?: () => void): boolean {
   return false
 }
 
-
 // 初始化蓝牙
-export async function initBT({onSuccess} : {onSuccess?: () => void}) {
+export async function initBT({ onSuccess }: { onSuccess?: () => void }) {
   const bleStore = useBleStore()
   uni.openBluetoothAdapter({
     success: function (res) {
@@ -68,7 +67,7 @@ export async function initBT({onSuccess} : {onSuccess?: () => void}) {
     fail: function (res) {
       if (res.errMsg.includes('already opened')) {
         console.log('已打开蓝牙', bleStore.adapterState)
-        if (bleStore.adapterState  < BleAdapterState.Ok) {
+        if (bleStore.adapterState < BleAdapterState.Ok) {
           bleStore.adapterState = BleAdapterState.Ok
           onSuccess && onSuccess()
         }

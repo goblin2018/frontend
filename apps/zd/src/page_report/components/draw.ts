@@ -21,7 +21,7 @@ export function drawLogoInfo(ctx: UniApp.CanvasContext, startPoint: { x: number;
   }
 
   // 绘制logo
-  ctx.drawImage(logoImg, startPoint.x, startPoint.y, 90, 37)
+  ctx.drawImage(logoImg, startPoint.x, startPoint.y, 68, 28)
 
   // 仅需要绘制图片，不再需要绘制文字
 
@@ -53,7 +53,7 @@ async function getImagePath(src: string): Promise<string> {
 
 // 添加用户信息绘制函数
 export async function drawUserInfo(ctx: UniApp.CanvasContext, startPoint: { x: number; y: number }, src: string) {
-  const avatarSize = 40
+  const avatarSize = 28
   const x = startPoint.x // 右侧边距
   const topPadding = startPoint.y // 顶部边距
 
@@ -77,19 +77,21 @@ export async function drawImage({ ctx, x, y, w, h, src }: { ctx: UniApp.CanvasCo
 
 export function drawCenterText({
   ctx,
-  width = 327,
+  width = 304,
   y,
   text,
   px = 16,
   fontSize = 16,
   leading = 24,
   color = '#fff',
+  paddingStart = 0,
 }: {
   ctx: UniApp.CanvasContext
   y: number
   text: string
   width?: number
   px?: number
+  paddingStart?: number
   fontSize?: number
   leading?: number
   color?: string
@@ -116,6 +118,6 @@ export function drawCenterText({
   lines.push(line)
 
   lines.forEach((line, index) => {
-    ctx.fillText(line, width / 2, y + index * leading)
+    ctx.fillText(line, width / 2 + paddingStart, y + index * leading)
   })
 }

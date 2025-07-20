@@ -6,11 +6,11 @@ import type { SensorData } from '@/lib/ble'
 import type { Music } from '@/types/music'
 import { calcFlow, calculateStandardDeviation, calcFocusStatistics } from '@/utils/trainCalculator'
 import { postx } from '@/lib/http'
-import { getAiReport, selectExperience } from '@/types/train'
+import { getAiReport, selectExperience, listHistory, getPreviousTrain } from '@/types/train'
 
 // 计算走神
 // 连续 10s 专注度平均值 < 40 时,认为是走神
-const distract_threshold = 30
+const distract_threshold = 40
 export const min_report_len = 60
 
 interface TrainState {
@@ -33,6 +33,9 @@ interface TrainState {
   // 练习体验选择状态
   selectedExperience: string
   experienceLoading: boolean
+  // 上次训练结果
+  previousTrain?: Train
+  previousTrainLoading: boolean
 }
 
 interface TrainTmp {
@@ -109,6 +112,9 @@ export const useTrainStore = defineStore('train', {
     // 练习体验选择状态初始化
     selectedExperience: '',
     experienceLoading: false,
+    // 上次训练结果
+    previousTrain: undefined,
+    previousTrainLoading: false,
   }),
   getters: {
     started: (state) => {
@@ -210,6 +216,9 @@ export const useTrainStore = defineStore('train', {
       // 重置练习体验选择状态
       this.selectedExperience = ''
       this.experienceLoading = false
+      // 重置上次训练结果
+      this.previousTrain = undefined
+      this.previousTrainLoading = false
     },
     startTrain(music: Music) {
       this.reset()
@@ -460,6 +469,38 @@ export const useTrainStore = defineStore('train', {
         return { success: false, error: error.message || '选择失败' }
       } finally {
         this.experienceLoading = false
+      }
+    },
+
+    // 获取上次训练结果
+    async getPreviousTrain(): Promise<Train | null> {
+      // 如果已经加载过，直接返回
+      if (this.previousTrain) {
+        return this.previousTrain
+      }
+
+      // 如果正在加载，等待
+      if (this.previousTrainLoading) {
+        return null
+      }
+
+      try {
+        this.previousTrainLoading = true
+
+        // 获取最近的训练记录（排除当前训练）
+        const res = await getPreviousTrain(this.report.id)
+
+        if (res) {
+          this.previousTrain = res
+          return res
+        }
+
+        return null
+      } catch (error) {
+        console.error('获取上次训练结果失败:', error)
+        return null
+      } finally {
+        this.previousTrainLoading = false
       }
     },
   },

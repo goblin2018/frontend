@@ -4,6 +4,8 @@ import { formatLen } from '@/lib/time'
 import { useTrainStore } from '@/state/train'
 import type { Train } from '@/types/train'
 import dayjs from 'dayjs'
+import { calcFlow, calculateStandardDeviation, calcFocusStatistics } from '@/utils/trainCalculator'
+import { upgradeReport } from '@/types/train'
 
 const props = defineProps<{
   train: Train
@@ -32,7 +34,52 @@ async function goReport() {
   if (props.train.data_file) {
     res = await download(props.train.data_file)
   }
-  trainStore.report = { ...props.train, tmp_data: res }
+
+  let report = { ...props.train, tmp_data: res }
+
+  // 如果train 的 version不为 2  则进行 转换
+  if (report.version !== 2 && report.len > 59) {
+    console.log('检测到需要转换报告版本，开始本地转换...')
+
+    // 本地转换：计算心流和专注统计部分，以及波动值
+    const flowResult = calcFlow(res)
+    if (flowResult) {
+      report.flowStar = flowResult.star
+      report.flowDuration = flowResult.duration
+      report.flowStartTime = flowResult.startTime
+      report.flowEndTime = flowResult.endTime
+    }
+
+    // 计算专注度和放松度的标准差（波动值）
+    report.focusFluctuation = calculateStandardDeviation(res.focus)
+    report.relaxFluctuation = calculateStandardDeviation(res.relax)
+
+    // 计算专注度统计
+    report.focusStatistics = calcFocusStatistics(res.focus, report.len)
+
+    // 设置版本为2
+    report.version = 2
+
+    console.log('报告版本转换完成，新版本:', report.version)
+
+    // 如果有ID，可选调用upgrade接口获取新的报告
+    if (report.id) {
+      try {
+        console.log('调用upgrade接口获取新报告...')
+        const upgradedReport = await upgradeReport(report)
+        console.log('upgrade接口返回结果:', upgradedReport)
+
+        // 更新报告数据，但保留本地计算的tmp_data
+        report = { ...upgradedReport, tmp_data: res }
+        console.log('报告升级完成，新报告:', report)
+      } catch (error) {
+        console.error('报告升级失败:', error)
+        // 即使升级失败，也使用本地转换的结果
+      }
+    }
+  }
+
+  trainStore.report = report
 
   uni.navigateTo({ url: '/page_report/report/index' })
 }

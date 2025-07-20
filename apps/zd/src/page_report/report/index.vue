@@ -21,7 +21,7 @@
     <TrainDesc v-if="result" :train="result" class="" />
     <view class="mt-2" v-if="canUploadFile">
       <view class="py-2 px-1.5 bg-blue-50 rounded-xl box-border">
-        <FocusAvg :value="result.focus_avg" :last-value="result.focus_avg" />
+        <FocusAvg :value="result.focus_avg" :last-value="previousTrain?.focus_avg" />
 
         <view class="h-20"></view>
 
@@ -33,10 +33,20 @@
 
         <FocusCurve :value="result.tmp_data?.focus" canvas-id="focus-curve" color="#14B8A6" name="专注力" />
 
-        <FocusDescGroup :max-value="result.focus_max" :avg-value="result.focus_avg" :fluctuation="result.focusFluctuation" />
+        <FocusDescGroup
+          :max-value="result.focus_max"
+          :last-max-value="previousTrain?.focus_max"
+          :avg-value="result.focus_avg"
+          :last-avg-value="previousTrain?.focus_avg"
+          :fluctuation="result.focusFluctuation"
+          :last-fluctuation="previousTrain?.focusFluctuation"
+        />
 
-        <Distraction_info :distraction-count="((result.distracted_count || 0) * 60) / result.len"></Distraction_info>
-        <MoreInfo :result="result" />
+        <Distraction_info
+          :distraction-count="((result.distracted_count || 0) * 60) / result.len"
+          :last-distraction-count="((previousTrain?.distracted_count || 0) * 60) / previousTrain?.len"
+        ></Distraction_info>
+        <MoreInfo :result="result" :previous-train="previousTrain" />
       </view>
 
       <AiReport :report="result.aiReport" :loading="aiReportLoading" :failed="aiReportFailed" />
@@ -113,15 +123,8 @@ import FocusDescGroup from './focus-desc-group.vue'
 import TrainDesc from './train-desc.vue'
 import AiReport from './ai-report.vue'
 import PraticeExperience from './pratice-experience.vue'
+import type { Train } from '@/types/train'
 
-onMounted(() => {
-  console.log('=== 报告页面 onMounted ===')
-  console.log('onMounted trainStore.report:', trainStore.report)
-  console.log('onMounted trainStore.report?.id:', trainStore.report?.id)
-  console.log('onMounted result.value:', result.value)
-  console.log('onMounted trainStore实例:', trainStore)
-  console.log('onMounted trainStore.$id:', trainStore.$id)
-})
 const trainStore = useTrainStore()
 const userStore = useUserStore()
 
@@ -129,17 +132,36 @@ const userStore = useUserStore()
 const aiReportLoading = ref(false)
 const aiReportFailed = ref(false)
 
+// 上次训练结果状态
+const previousTrain = ref<Train | null>(null)
+const previousTrainLoading = ref(false)
+
 const canUploadFile = computed(() => {
   return result.value?.len && result.value.len >= min_report_len
 })
 
-// 获取练习体验加载状态
+// 获取上次训练结果
+async function fetchPreviousTrain() {
+  if (previousTrainLoading.value || previousTrain.value) {
+    return
+  }
+
+  try {
+    previousTrainLoading.value = true
+    const prevTrain = await trainStore.getPreviousTrain()
+    previousTrain.value = prevTrain
+  } catch (error) {
+    console.error('获取上次训练结果失败:', error)
+  } finally {
+    previousTrainLoading.value = false
+  }
+}
 
 // 修改计算弹窗最大高度
 const maxPopupHeight = uni.getWindowInfo().screenHeight - 340
 
-const width = 327
-const height = 674
+const width = 344
+const height = 448
 
 const shareOpen = ref(false)
 function closeShare() {
@@ -202,7 +224,6 @@ async function showShare() {
         height,
         result: result.value,
         userAvatar: userStore.user?.avatar,
-        mindfulImg: mindfulImg.value,
       })
     },
   })
@@ -225,38 +246,6 @@ const result = computed(() => {
 })
 
 console.log('初始 result.value:', result.value)
-
-const flowStar = computed(() => {
-  if (!result.value?.flowStar) {
-    return 0
-  }
-
-  if (result.value.flowStar >= 3) {
-    return 3
-  }
-
-  if (result.value.flowStar >= 2) {
-    return 2
-  }
-
-  if (result.value.flowStar >= 1) {
-    return 1
-  }
-  return 0
-})
-
-const mindfulImg = computed(() => {
-  switch (flowStar.value) {
-    case 0:
-      return 'https://mindsensor.oss-cn-shenzhen.aliyuncs.com/img/m0.png'
-    case 1:
-      return 'https://mindsensor.oss-cn-shenzhen.aliyuncs.com/img/m1.png'
-    case 2:
-      return 'https://mindsensor.oss-cn-shenzhen.aliyuncs.com/img/m2.png'
-    default:
-      return 'https://mindsensor.oss-cn-shenzhen.aliyuncs.com/img/m3.png'
-  }
-})
 
 // 页面展示时的处理 - 仅处理tip获取，不再处理上传
 onShow(async () => {
@@ -281,6 +270,11 @@ onShow(async () => {
   // 初始化已选择的练习体验
   if (result.value?.practiceExperience) {
     trainStore.selectedExperience = result.value.practiceExperience
+  }
+
+  // 获取上次训练结果用于对比
+  if (canUploadFile.value) {
+    await fetchPreviousTrain()
   }
 
   console.log('result.value', canUploadFile.value, result.value?.id, !result.value?.aiReport, !aiReportLoading.value, !aiReportFailed.value)

@@ -8,22 +8,20 @@ interface State {
   year: number
   month: number
   totalLenMinutes: number
-  zenCount: number
-  zen3Count: number
+  flowCount: number
   timeData: string[]
   lenData: number[]
 }
 
-export const useStatisticsStore = defineStore({
-  id: 'statistics',
+export const useStatisticsStore = defineStore('statistics', {
   state: (): State => ({
     focus: [],
     relax: [],
     year: 0,
     month: 0,
     totalLenMinutes: 0,
-    zenCount: 0,
-    zen3Count: 0,
+    flowCount: 0,
+
     timeData: [],
     lenData: [],
   }),
@@ -50,8 +48,7 @@ export const useStatisticsStore = defineStore({
       let tmpFoucus: number[] = []
       let tmpRelax: number[] = []
       let totalLen = 0
-      let tmpZenCount = 0
-      let tmpZen3Count = 0
+      let tmpFlowCount = 0
       let timeData: string[] = []
       let tmpLenData: number[] = []
       res.items.forEach((item) => {
@@ -59,11 +56,8 @@ export const useStatisticsStore = defineStore({
         tmpRelax.push(Math.round(item.relax_avg || 0))
         totalLen += item.len
         tmpLenData.push(item.len)
-        if (item.zen1 && item.zen1 >= 60) {
-          tmpZenCount += 1
-        }
-        if (item.zen3 && item.zen3 >= 60) {
-          tmpZen3Count += 1
+        if (item.flowStar > 0) {
+          tmpFlowCount += 1
         }
         timeData.push(dayjs.unix(item.start_at).format('MM/DD'))
       })
@@ -71,8 +65,7 @@ export const useStatisticsStore = defineStore({
       this.focus = tmpFoucus
       this.relax = tmpRelax
       this.totalLenMinutes = Math.round(totalLen / 60)
-      this.zenCount = tmpZenCount
-      this.zen3Count = tmpZen3Count
+      this.flowCount = tmpFlowCount
       this.timeData = timeData
       this.lenData = tmpLenData
     },

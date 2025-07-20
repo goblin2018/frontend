@@ -58,4 +58,5 @@ export const useGroupStore = defineStore('group', {
       }
     },
   },
+  persist: true,
 })

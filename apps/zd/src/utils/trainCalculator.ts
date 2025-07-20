@@ -1,5 +1,13 @@
 import type { TrainFileInfo } from '@/types/train'
 
+export const flowStarInfo = [
+  { star: 1, minValue: 20 },
+  { star: 2, minValue: 30 },
+  { star: 3, minValue: 40 },
+  { star: 4, minValue: 50 },
+  { star: 5, minValue: 60 },
+]
+
 // 计算心流星级 (20-29: 1星, 30-39: 2星, 40-49: 3星, 50-59: 4星, 60+: 5星)
 export function getFlowStar(minValue: number): number {
   if (minValue >= 60) return 5

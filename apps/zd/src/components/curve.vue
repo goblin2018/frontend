@@ -1,5 +1,5 @@
 <template>
-  <view class="w-full h-145 chart relative">
+  <view :class="['w-full relative', props.theme === 'dark' ? 'h-68' : 'h-145 chart']">
     <awx-echarts
       :hide="popupStore.show"
       class="z-0"
@@ -56,44 +56,45 @@ const createOption = (focusData: number[], relaxData: number[], timeData: number
       },
     },
     grid: {
-      top: 12,
-      right: 12,
-      left: props.showLatest ? 12 : 30,
-      bottom: props.showLatest ? 12 : 65,
+      top: props.theme === 'dark' ? 0 : 12,
+      right: props.theme === 'dark' ? 0 : 12,
+      left: props.theme === 'dark' ? 0 : props.showLatest ? 12 : 30,
+      bottom: props.theme === 'dark' ? 0 : props.showLatest ? 12 : 65,
     },
     xAxis: {
       type: 'category',
       data: timeData,
       boundaryGap: false,
       axisLine: {
-        show: true,
+        show: props.theme !== 'dark',
         lineStyle: {
           color: props.theme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : '#000', // 或 'white'
         },
       },
       interval: timeData.length / 10,
-      axisTick: { show: !props.showLatest },
-      axisLabel: { show: !props.showLatest },
+      axisTick: { show: props.theme !== 'dark' && !props.showLatest },
+      axisLabel: { show: props.theme !== 'dark' && !props.showLatest },
     },
     yAxis: {
       type: 'value',
       max: 100,
       interval: 50,
-      axisLine: { show: !props.showLatest },
-      axisTick: { show: !props.showLatest },
-      axisLabel: { show: !props.showLatest }, // 控制刻度文字显示
-      splitLine: { show: !props.showLatest }, // 控制水平横线显示
+      axisLine: { show: props.theme !== 'dark' && !props.showLatest },
+      axisTick: { show: props.theme !== 'dark' && !props.showLatest },
+      axisLabel: { show: props.theme !== 'dark' && !props.showLatest }, // 控制刻度文字显示
+      splitLine: { show: props.theme !== 'dark' && !props.showLatest }, // 控制水平横线显示
     },
-    dataZoom: props.showLatest
-      ? []
-      : [
-          {
-            type: 'slider',
-            start: 0,
-            end: 100,
-            showDetail: false,
-          },
-        ],
+    dataZoom:
+      props.showLatest || props.theme === 'dark'
+        ? []
+        : [
+            {
+              type: 'slider',
+              start: 0,
+              end: 100,
+              showDetail: false,
+            },
+          ],
     series: [
       {
         name: '专注力',

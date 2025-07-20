@@ -7,8 +7,7 @@ import { useTrainStore } from '@/state/train'
 import { useUserStore } from '@/state/user'
 import { useSettingsStore } from '@/state/settings'
 import Empty from '@/components/business/empty.vue'
-
-const dingUrl = 'https://mindsensor.oss-cn-shenzhen.aliyuncs.com/music/ding.mp3'
+import { playDistractionAlert, cleanupAudio } from '@/lib/audio'
 
 const popupOpen = ref(false)
 const close = () => {
@@ -20,14 +19,6 @@ const close = () => {
 const emit = defineEmits(['onNotLogin'])
 
 const settingsStore = useSettingsStore()
-
-var innerAudioContext: UniApp.InnerAudioContext
-
-function destroyInnerAudioContext() {
-  if (innerAudioContext) {
-    innerAudioContext.destroy()
-  }
-}
 
 const userStore = useUserStore()
 
@@ -168,14 +159,14 @@ const listen = () => {
       let part1: SensorData1 | null = null
 
       checkInterval.value = setInterval(() => {
-        // 每3秒检查一次是否佩戴正常 如果 有数值 则佩戴正常 否则 佩戴不正常 但是每秒仅能设置一次
+        // 每2秒检查一次是否佩戴正常 如果 有数值 则佩戴正常 否则 佩戴不正常
         if (wearState.value === -1) {
           onNotWearOk()
         }
         wearState.value = -1
 
         // console.log('rate now ***********', dayjs().format('HH:mm:ss'), '*******************')
-      }, 3000)
+      }, 2000)
 
       console.log('checkInterval.value after', checkInterval.value)
 
@@ -350,22 +341,14 @@ function closePopup() {
 onUnmounted(() => {
   clearCheckInterval()
   stopSearch()
-  destroyInnerAudioContext()
+  cleanupAudio()
 })
 
 watch(
   () => trainStore.is_distracted,
   (val) => {
     if (val) {
-      if (settingsStore.use_distraction) {
-        innerAudioContext = uni.createInnerAudioContext()
-        innerAudioContext.src = dingUrl
-        innerAudioContext.play()
-
-        setTimeout(() => {
-          destroyInnerAudioContext()
-        }, 1000)
-      }
+      playDistractionAlert(settingsStore.distraction_volume)
 
       setTimeout(() => {
         trainStore.is_distracted = false

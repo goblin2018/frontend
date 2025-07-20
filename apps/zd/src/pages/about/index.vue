@@ -27,9 +27,12 @@ import { version } from '@/consts/version'
     </view>
     <view class="bg-white rounded-xl p-2 box-border text-black/80 mt-2 flex flex-col gap-3 hyphens-auto break-all">
       <view>“止动计划”是由西南大学（重庆）产业技术研究院止动研发中心、教育部认知与人格重点实验室科研成果转化项目。</view>
+      <image src="https://cyue.oss-cn-shenzhen.aliyuncs.com/assets/center.png" class="w-188 h129 mx-auto my-1" />
+
       <view>
         “止动计划”以严谨的随机对照心理学实验为基础，科学验证了正念训练结合认知行为干预（CBT）的综合干预策略在提升注意力缺陷多动障碍（ADHD）人群的注意力调控与执行功能方面的显著效果。
       </view>
+
       <view>
         “止动计划”将脑神经反馈技术（Neurofeedback Technology, NFT）与正念训练体系深度融合，开发出一套可视化、标准化、可操作的 ADHD
         干预工具。通过实时监测个体的脑电波活动，提供即时神经反馈，引导个体有意识地关注当下，调节前额叶皮层功能，逐步改善其专注力、情绪管理与行为控制能力。

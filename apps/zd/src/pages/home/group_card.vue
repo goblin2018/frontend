@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import clsx from '@/lib/clsx'
 
-const props = defineProps<{ name: string; desc: string; onClick?: Function; img: string; className?: string; height?: number }>()
+const props = defineProps<{ name: string; desc: string; onClick?: Function; img: string; className?: string; height?: number; width?: number }>()
 
 function handleClick() {
   if (props.onClick) {
@@ -19,9 +19,9 @@ function handleClick() {
   >
     <view class="z-10 p-2">
       <view class="text-slate-950 text-18px font-500">{{ name }}</view>
-      <view class="text-slate-600 mt-0.5 font-400 text-14px">{{ desc }}</view>
+      <view class="text-black/35 mt-0.5 font-400 text-14px">{{ desc }}</view>
     </view>
-    <image :src="img" mode="aspectFit" :style="{ height: height + 'px', width: height + 'px' }" class="absolute z-0 top-0 right-0 rounded-xl" />
+    <image :src="img" mode="aspectFit" :style="{ height: height + 'px', width: (width || height) + 'px' }" class="absolute z-0 top-0 right-0 rounded-xl" />
   </view>
 </template>
 

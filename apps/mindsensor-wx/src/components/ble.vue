@@ -360,6 +360,7 @@ watch(
       if (settingsStore.use_distraction) {
         innerAudioContext = uni.createInnerAudioContext()
         innerAudioContext.src = dingUrl
+        innerAudioContext.volume = 0.5
         innerAudioContext.play()
 
         setTimeout(() => {

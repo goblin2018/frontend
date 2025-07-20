@@ -1,15 +1,44 @@
 {
-  "eslint.workingDirectories": [
-    {
-      "mode": "auto"
-    }
-  ]
-  // "files.watcherExclude": {
-  //   "**/node_modules/**": true,
-  //   "**/dist/**": true,
-  //   "**/.git/**": true
-  // },
-  // "files.exclude": {
-  //   "**/dist": true
-  // }
+  // ***** 核心优化 *****
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    // --- Monorepo 关键排除项 ---
+    "**/node_modules": true, // 极其重要！
+    "**/.next": true, // Next.js build output
+    "**/.cache": true, // General cache folder
+    "**/dist": true, // Build output
+    "**/build": true, // Build output
+    "**/coverage": true, // Test coverage
+    "**/pnpm-lock.yaml": true, // 如果文件过大，可以考虑
+    "**/yarn.lock": true,
+    "**/package-lock.json": true
+  },
+  // 同样将这些目录从搜索中排除
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/.cache": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/coverage": true,
+    "**/pnpm-lock.yaml": true,
+    "**/yarn.lock": true,
+    "**/package-lock.json": true
+  },
+  // 减少文件监视器的压力
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true, // 极其重要！
+    "**/.next/**": true,
+    "**/.cache/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/coverage/**": true
+  }
 }

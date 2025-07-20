@@ -3,22 +3,20 @@
     <view class="bg-slate-100 rounded-lg mb-2">
       <MonthSwitch :year="year" :month="month" @change="updateDate" class="" />
     </view>
+
+    <view class="grid grid-cols-2 gap-2 mb-2">
+      <StatisticsCard title="心流次数" :info="`${statisticsStore.flowCount}次`" src="flower" />
+      <StatisticsCard title="累计时长" :info="`${statisticsStore.totalLenMinutes}分钟`" src="sand-clock" />
+    </view>
     <StatisticsCurve :focus="focus" :relax="relax" :timeData="timeData" />
-    <view class="flex items-center gap-2 justify-center py-0.5 mb-1">
+    <view class="flex items-center gap-2 justify-center py-0.5 mb-2 mt-1">
       <MarkItem name="专注" color="#fcd34d" />
       <MarkItem name="放松" color="#4fbba9" />
     </view>
 
     <TimeCurve :timeData="timeData" :data="statisticsStore.lenData" />
-    <view class="flex items-center justify-center py-0.5 mb-2">
+    <view class="flex items-center justify-center py-0.5 mb-2 mt-1">
       <MarkItem name="训练时长" color="#60A5FA" />
-    </view>
-
-    <view class="grid grid-cols-2 gap-2">
-      <StatisticsCard title="训练次数" :info="`${focus.length}次`" src="flour" />
-      <StatisticsCard title="累计时长" :info="`${statisticsStore.totalLenMinutes}分钟`" src="sand-clock" />
-      <StatisticsCard title="正念次数" :info="`${statisticsStore.zenCount}次`" src="star1" />
-      <StatisticsCard title="正念三星" :info="`${statisticsStore.zen3Count}次`" src="star3" />
     </view>
   </view>
 </template>

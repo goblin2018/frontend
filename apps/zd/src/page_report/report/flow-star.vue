@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import Title from './title.vue'
 import { formatLen } from '@/lib/time'
+import { flowStarInfo } from '@/utils/trainCalculator'
 
 const props = withDefaults(
   defineProps<{
@@ -57,12 +58,16 @@ function getEncourageInfo(flow: number) {
   }
 }
 
+const flowStarMinValue = computed(() => {
+  return flowStarInfo.find((item) => item.star === props.flow)?.minValue || 0
+})
+
 const descInfo = computed(() => {
   if (props.flow == 0) {
-    return `未能达到心流状态，${getEncourageInfo(props.flow)}`
+    return `未能达到心流状态。想要获取心流星星，需要您在练习过程中，专注和放松同时达到20以上，并持续至少60s，${getEncourageInfo(props.flow)}`
   }
 
-  return `您在${formatLen(props.startAt)} - ${formatLen(props.endAt)}之间表现最佳，达到 ${props.flow} 星心流状态，共持续了 ${formatLen(props.endAt - props.startAt, true, true)}😄 。${getEncourageInfo(props.flow)}`
+  return `您在${formatLen(props.startAt)} - ${formatLen(props.endAt)}之间表现最佳，专注和放松同时达到${flowStarMinValue.value}以上,并持续了${formatLen(props.endAt - props.startAt, true, true)}，达到 ${props.flow} 星心流状态😄。${getEncourageInfo(props.flow)}`
 })
 </script>
 

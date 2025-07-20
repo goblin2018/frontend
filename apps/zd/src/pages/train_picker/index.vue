@@ -1,14 +1,19 @@
 <script lang="ts" setup>
 import buttonx from '@/components/buttonx.vue'
 import Tabs from '@/components/tabs.vue'
+import LoginPopup from '@/components/login-popup.vue'
 import { useGroupStore } from '@/state/group'
 import { useTrainStore } from '@/state/train'
+import { useUserStore } from '@/state/user'
 import type { Music } from '@/types/music'
-import Music_card from '../course/music_card.vue'
+import Music_card from './music_card.vue'
 import { State2 } from '@/types/user'
 import type { Group } from '@/types/group'
+
 const trainStore = useTrainStore()
 const groupStore = useGroupStore()
+const userStore = useUserStore()
+const showLogin = ref(false)
 
 onShow(() => {
   // 获取音频列表
@@ -39,8 +44,17 @@ function pick(index: number) {
 
 // todo 设置自由练习 并进行跳转
 function confirm() {
-  // 设置音乐为自由练习
+  // 检查登录状态
+  if (!userStore.isLogin) {
+    uni.showToast({
+      title: '请登录后使用',
+      icon: 'none',
+    })
+    showLogin.value = true
+    return
+  }
 
+  // 设置音乐为自由练习
   if (!groupStore.music) {
     uni.showToast({
       title: '请选择音乐',
@@ -64,9 +78,15 @@ function confirm() {
 function handleSwiperChange(e: any) {
   pick(e.detail.current)
 }
+
+function closeLogin() {
+  showLogin.value = false
+}
 </script>
 
 <template>
+  <LoginPopup :open="showLogin" @close="closeLogin"></LoginPopup>
+
   <view class="">
     <view class="flex items-end justify-center my-2 z-20">
       <view class="z-10">

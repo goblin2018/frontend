@@ -22,6 +22,7 @@ interface TrainState {
   exitDirectly: boolean
   play_at: number
   report?: Train
+  hasUploaded: boolean // 是否已经上传过
 }
 
 interface TrainTmp {
@@ -131,8 +132,7 @@ const initTrain: Train = {
   data_file: '',
 }
 
-export const useTrainStore = defineStore({
-  id: 'train',
+export const useTrainStore = defineStore('train', {
   state: (): TrainState => ({
     exitDirectly: false,
     view_only: false,
@@ -144,6 +144,7 @@ export const useTrainStore = defineStore({
     training: false,
     play_at: 0,
     report: undefined,
+    hasUploaded: false,
   }),
   getters: {
     started: (state) => {
@@ -162,7 +163,7 @@ export const useTrainStore = defineStore({
       console.log('train play ', this.play_at)
     },
     pause() {
-      var len = 0
+      let len = 0
       if (this.train && this.play_at > 0) {
         len = dayjs().unix() - this.play_at
         this.play_at = 0
@@ -226,6 +227,7 @@ export const useTrainStore = defineStore({
       this.view_only = false
       this.exitDirectly = false
       this.is_distracted = false
+      this.hasUploaded = false
     },
     startTrain(music: Music) {
       this.reset()
@@ -271,9 +273,7 @@ export const useTrainStore = defineStore({
       let zen1 = false
       let zen2 = false
       let zen3 = false
-      let flow1 = false
-      let flow2 = false
-      let flow3 = false
+
       if (s.focus > 60) {
         this.train.focus_total! += 1
       }
@@ -286,20 +286,11 @@ export const useTrainStore = defineStore({
         zen1 = true
         zen2 = true
         zen3 = true
-        flow1 = true
-        flow2 = true
-        flow3 = true
       } else if (s.focus >= 40 && s.relax >= 40) {
         zen1 = true
         zen2 = true
-        flow1 = true
-        flow2 = true
-        flow3 = true
       } else if (s.focus >= 30 && s.relax >= 30) {
         zen1 = true
-        flow1 = true
-        flow2 = true
-        flow3 = true
       }
 
       if (zen1) {

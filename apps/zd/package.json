@@ -18,8 +18,10 @@
     "@dcloudio/uni-shared": "3.0.0-4060420250429001",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
+    "deep-pick-omit": "^1.2.1",
     "js-base64": "^3.7.7",
     "pinia": "^2.2.6",
+    "pinia-plugin-persistedstate": "^4.4.1",
     "vue": "3.4.21"
   },
   "devDependencies": {

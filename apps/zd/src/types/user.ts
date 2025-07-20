@@ -8,6 +8,9 @@ export interface User {
   birthday?: number
   open_id?: string
   addr?: Addr
+  flowCount?: number
+  trainTime?: number
+  flowStarCount?: number
 }
 
 export enum State2 {

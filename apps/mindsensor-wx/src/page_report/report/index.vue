@@ -333,7 +333,7 @@ onShow(async () => {
     return
   }
   // 上传训练数据
-  if (trainStore.canUploadFile) {
+  if (trainStore.canUploadFile && !trainStore.hasUploaded) {
     const file = await upoload()
     d.data_file = file
     console.log('上传训练数据')
@@ -341,11 +341,12 @@ onShow(async () => {
     d.tip = tip.info
     trainStore.setTip(tip.info)
     // 上传训练结果
-    postx('api/train', d).then((res) => {
-      uni.showToast({
-        title: '上传成功',
-      })
+    await postx('api/train', d)
+    uni.showToast({
+      title: '上传成功',
     })
+    // 确保仅产生一次上传
+    trainStore.hasUploaded = true
   }
 })
 

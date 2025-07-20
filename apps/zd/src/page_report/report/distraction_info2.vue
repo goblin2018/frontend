@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import IncreaseInfo from './increase-info.vue'
+
 const props = defineProps<{
   distractionCount: number
+  lastDistractionCount?: number
 }>()
 
 const distractionInfo = computed(() => {
@@ -31,6 +34,13 @@ const distractionInfo = computed(() => {
     }
   }
 })
+
+const increaseValue = computed(() => {
+  if (!props.lastDistractionCount) {
+    return 0
+  }
+  return props.distractionCount - props.lastDistractionCount
+})
 </script>
 <template>
   <view class="flex items-center justify-center pt-4">
@@ -39,7 +49,8 @@ const distractionInfo = computed(() => {
       <view class="font-medium">走神频率</view>
       <view class="flex items-baseline">
         <view class="text-4xl font-bold">{{ distractionCount.toFixed(1) }}</view>
-        <view class="">次/分钟</view>
+        <view class="mr-1">次/分钟</view>
+        <IncreaseInfo :increase-value="increaseValue" :decimal-places="1" />
       </view>
 
       <view class="text-black/65 mt-1">{{ distractionInfo.title }}</view>

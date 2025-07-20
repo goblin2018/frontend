@@ -59,30 +59,30 @@ export interface Train {
   distracted_count?: number
   tip?: string
 
+  relax_total?: number // > 60 的次数
+  relax_min?: number // 放松 最小值
+  relax_max?: number // 放松 最大值
+
+  relax_avg?: number // 放松 均值
+
+  focus_total?: number // 专注  > 60 次数
+  focus_min?: number
+  focus_max?: number
+  focus_avg?: number
+
+  data_file?: string // 结果文件地址
+  tmp_data?: TrainFileInfo
+  aiReport?: AiReport
+  practiceExperience?: string
+
   // 新增心流算法结果字段
   flowStar?: number // 最高心流星级（1-5星）
   flowDuration?: number // 最高心流持续时长（秒）
   flowStartTime?: number // 最高心流开始时间（相对于训练开始的秒数）
   flowEndTime?: number // 最高心流结束时间（相对于训练开始的秒数）
   focusStatistics?: FocusStatistics[]
-
-  relax_total?: number // > 60 的次数
-  relax_min?: number // 放松 最小值
-  relax_max?: number // 放松 最大值
-
-  relax_avg?: number // 放松 均值
-  relaxFluctuation?: number // 放松波动值
-
-  focus_total?: number // 专注  > 60 次数
-  focus_min?: number
-  focus_max?: number
-  focus_avg?: number
   focusFluctuation?: number // 专注波动值
-
-  data_file?: string // 结果文件地址
-  tmp_data?: TrainFileInfo
-  aiReport?: AiReport
-  practiceExperience?: string
+  relaxFluctuation?: number // 放松波动值
 
   version?: number
 }
@@ -134,6 +134,10 @@ export const listHistory = (opt: ListTrainHistoryReq): Promise<ListTrainHistoryR
   return getx<ListTrainHistoryResp>(`${base_url}/list_history`, opt, false)
 }
 
+export const getPreviousTrain = (trainId: string): Promise<Train | null> => {
+  return getx<Train | null>(`${base_url}/${trainId}/previous`, {}, false) // 60秒超时
+}
+
 export const getAiReport = (trainId: string): Promise<AiReport> => {
   return getx<AiReport>(`${base_url}/${trainId}/ai-report`, {}, false, 60000) // 60秒超时
 }
@@ -146,4 +150,10 @@ export interface SelectExperienceReq {
 
 export const selectExperience = async (req: SelectExperienceReq) => {
   await postx(`${base_url}/experience`, req)
+}
+
+// 报告升级接口
+export const upgradeReport = async (train: Train): Promise<Train> => {
+  const response = await postx<Train>(`${base_url}/upgrade`, train)
+  return response.data
 }

@@ -1,4 +1,4 @@
-import { postx } from '@/lib/http'
+import { getx, postx } from '@/lib/http'
 import type { User } from '@/types/user'
 import dayjs from 'dayjs'
 import { defineStore } from 'pinia'
@@ -43,6 +43,7 @@ export const useUserStore = defineStore('user', {
         uni.setStorageSync('user', JSON.stringify(this.user!))
       })
     },
+
     setUser(user?: User) {
       this.user = user
       if (user) {
@@ -50,6 +51,10 @@ export const useUserStore = defineStore('user', {
       } else {
         uni.removeStorageSync('user')
       }
+    },
+    async loadUserInfo() {
+      const res = await getx<User>('api/user/info')
+      this.setUser(res)
     },
     exit() {
       this.user = undefined

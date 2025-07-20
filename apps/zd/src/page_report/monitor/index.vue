@@ -1,98 +1,98 @@
 <template>
-  <Page :extra-height="96" class="" title="实时监测">
+  <Page :extra-height="96">
     <LoginPopup :open="showLogin" @close="closeLogin"></LoginPopup>
 
     <template #main>
       <Back_blocker :can-upload="trainStore.train?.len! >= min_report_len" @go-back="goBack"></Back_blocker>
 
-      <view class="h-72 flex items-center justify-between">
-        <view class="flex items-baseline">
-          <view class="text-slate-50 text-24px font-medium mr-1">实时监测</view>
-          <view class="text-slate-50 text-16px">{{ formatLen(trainStore.train?.len) }}</view>
+      <view class="px-2 box-border">
+        <view class="h-72 flex items-center justify-between">
+          <view class="flex items-baseline">
+            <view class="text-slate-50 text-24px font-medium mr-1">觉察模式</view>
+            <view class="text-slate-50 text-16px">{{ formatLen(trainStore.train?.len) }}</view>
+          </view>
+          <ble @onNotLogin="showLogin = true"></ble>
         </view>
-        <ble @onNotLogin="showLogin = true"></ble>
-      </view>
 
-      <sequence_curve
-        theme="dark"
-        :distract-points="distractPoints"
-        :show-latest="true"
-        :focus="trainStore.train_tmp.data.focus"
-        :relax="trainStore.train_tmp.data.relax"
-        canvas-id="abcd"
-      />
+        <TrainingRealtimeMonitor
+          class="block my-2"
+          :distract-points="distractPoints"
+          :focus-data="trainStore.train_tmp.data.focus"
+          :relax-data="trainStore.train_tmp.data.relax"
+        />
 
-      <Distraction_info theme="dark" class="mb-2" class-name=" rounded-xl p-1" :count="trainStore.train?.distracted_count"></Distraction_info>
+        <Distraction_info theme="dark" class="mb-2" class-name=" rounded-xl" :count="trainStore.train?.distracted_count"></Distraction_info>
 
-      <view></view>
+        <view></view>
 
-      <band_info theme="dark" :result="trainStore.train_tmp.data"></band_info>
-      <Focus_relax_info
-        theme="dark"
-        :percent="focusPercent"
-        :max="trainStore.train?.focus_max"
-        :min="trainStore.train?.focus_min"
-        :avg="trainStore.train?.focus_avg"
-        title="eSense专注指数"
-      >
-        <view class="text-slate-800">
-          <view class="mb-0.5">
-            <text class="font-medium mr-0.5">时长</text>
-            <text>表示在一定时间内，专注状态的持续时间。</text>
+        <band_info theme="dark" :result="trainStore.train_tmp.data"></band_info>
+        <!-- <Focus_relax_info
+          theme="dark"
+          :percent="focusPercent"
+          :max="trainStore.train?.focus_max"
+          :min="trainStore.train?.focus_min"
+          :avg="trainStore.train?.focus_avg"
+          title="eSense专注指数"
+        >
+          <view class="text-slate-800">
+            <view class="mb-0.5">
+              <text class="font-medium mr-0.5">时长</text>
+              <text>表示在一定时间内，专注状态的持续时间。</text>
+            </view>
+            <view class="mb-0.5">
+              <text class="font-medium mr-0.5">波动</text>
+              <text>表示在一定时间内的专注状态的稳定性。较小的波动表示专注状态相对稳定，较大的波动则表示专注状态的波动较大。 </text>
+            </view>
+            <view class="mb-0.5">
+              <text class="font-medium mr-0.5">平均</text>
+              <text>表示在一定时间内的整体专注水平。较高的平均值表示整体专注水平较高。</text>
+            </view>
           </view>
-          <view class="mb-0.5">
-            <text class="font-medium mr-0.5">波动</text>
-            <text>表示在一定时间内的专注状态的稳定性。较小的波动表示专注状态相对稳定，较大的波动则表示专注状态的波动较大。 </text>
-          </view>
-          <view class="mb-0.5">
-            <text class="font-medium mr-0.5">平均</text>
-            <text>表示在一定时间内的整体专注水平。较高的平均值表示整体专注水平较高。</text>
-          </view>
-        </view>
-      </Focus_relax_info>
+        </Focus_relax_info>
 
-      <Focus_relax_info
-        theme="dark"
-        :percent="relaxPercent"
-        :max="trainStore.train!.relax_max"
-        :min="trainStore.train!.relax_min"
-        :avg="trainStore.train!.relax_avg"
-        title="eSense放松指数"
-      >
-        <view class="text-slate-800">
-          <view class="mb-0.5">
-            <text class="font-medium mr-0.5">时长</text>
-            <text>表示在一定时间内，放松状态的持续时间。</text>
+        <Focus_relax_info
+          theme="dark"
+          :percent="relaxPercent"
+          :max="trainStore.train!.relax_max"
+          :min="trainStore.train!.relax_min"
+          :avg="trainStore.train!.relax_avg"
+          title="eSense放松指数"
+        >
+          <view class="text-slate-800">
+            <view class="mb-0.5">
+              <text class="font-medium mr-0.5">时长</text>
+              <text>表示在一定时间内，放松状态的持续时间。</text>
+            </view>
+            <view class="mb-0.5">
+              <text class="font-medium mr-0.5">波动</text>
+              <text>表示在一定时间内的放松状态的稳定性。较小的波动表示放松状态相对稳定，较大的波动则表示放松状态的波动较大。 </text>
+            </view>
+            <view class="mb-0.5">
+              <text class="font-medium mr-0.5">平均</text>
+              <text>表示在一定时间内的整体放松水平。较高的平均值表示整体放松水平较高。</text>
+            </view>
           </view>
-          <view class="mb-0.5">
-            <text class="font-medium mr-0.5">波动</text>
-            <text>表示在一定时间内的放松状态的稳定性。较小的波动表示放松状态相对稳定，较大的波动则表示放松状态的波动较大。 </text>
-          </view>
-          <view class="mb-0.5">
-            <text class="font-medium mr-0.5">平均</text>
-            <text>表示在一定时间内的整体放松水平。较高的平均值表示整体放松水平较高。</text>
-          </view>
-        </view>
-      </Focus_relax_info>
-      <reference theme="dark"></reference>
+        </Focus_relax_info> -->
+        <reference theme="dark"></reference>
 
-      <!-- <view class="divider mt-1"></view> -->
-      <view>
+        <!-- <view class="divider mt-1"></view> -->
         <view>
-          <!--   专注力 -->
+          <view>
+            <!--   专注力 -->
 
-          <!-- <view class="divider"></view> -->
-          <!-- <view class="divider"></view> -->
+            <!-- <view class="divider"></view> -->
+            <!-- <view class="divider"></view> -->
 
-          <!-- <sequence_curve :focus="result.tmp_data?.focus" :relax="result.tmp_data?.relax" />
+            <!-- <sequence_curve :focus="result.tmp_data?.focus" :relax="result.tmp_data?.relax" />
           <view class="divider"></view> -->
 
-          <!-- <zen :zen1="result.zen1" :zen2="result.zen2" :zen3="result.zen3"></zen>
+            <!-- <zen :zen1="result.zen1" :zen2="result.zen2" :zen3="result.zen3"></zen>
         <view class="divider mt-1"></view>
 
         <flow :flow1="result.flow1" :flow2="result.flow2" :flow3="result.flow3"></flow>
 
         <view class="divider mt-1"></view> -->
+          </view>
         </view>
       </view>
       <view class="h-100"></view>
@@ -103,7 +103,7 @@
 <script setup lang="ts">
 import { useTrainStore, min_report_len } from '@/state/train'
 import ble from '@/components/ble.vue'
-import sequence_curve from '@/components/sequence_curve.vue'
+import TrainingRealtimeMonitor from '@/components/training-realtime-monitor.vue'
 import reference from '../report/reference.vue'
 import band_info from '../report/band_info.vue'
 import Page from '@/components/page.vue'

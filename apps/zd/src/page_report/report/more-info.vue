@@ -19,9 +19,9 @@
         :max-value="result.relax_max"
         :avg-value="result.relax_avg"
         :fluctuation="result.relaxFluctuation"
-        :last-max-value="result.relax_max"
-        :last-avg-value="result.relax_avg"
-        :last-fluctuation="result.relaxFluctuation"
+        :last-max-value="previousTrain?.relax_max"
+        :last-avg-value="previousTrain?.relax_avg"
+        :last-fluctuation="previousTrain?.relaxFluctuation"
         type="relax"
       />
 
@@ -50,6 +50,7 @@ const toggleOpen = () => {
 
 defineProps<{
   result: Train
+  previousTrain?: Train | null
 }>()
 </script>
 

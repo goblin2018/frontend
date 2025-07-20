@@ -6,12 +6,10 @@
       <text>报告生成中...</text>
     </view>
 
-    <view v-if="trainStore.uploadStatus === 'failed'" class="flex flex-col items-center">
-      <text class="text-red-500 mb-2">生成失败</text>
-      <text class="text-sm text-gray-500 mb-4 text-center">{{ trainStore.uploadError }}</text>
-      <view class="flex flex-col gap-2 w-full">
+    <view v-if="trainStore.uploadStatus === 'failed'" class="flex flex-col items-center w-full">
+      <text class="text-gray-500 mb-4 text-center">{{ trainStore.uploadError }}</text>
+      <view class="flex flex-col gap-2 w-full px-2">
         <buttonx @click="retryUpload" class-name="bg-blue-500 text-white">重试</buttonx>
-        <buttonx @click="viewLocalReport" class-name="bg-gray-500 text-white">查看本地报告</buttonx>
         <buttonx @click="backToOriginal" class-name="bg-gray-200 text-slate-950">返回</buttonx>
       </view>
     </view>
@@ -43,12 +41,6 @@ async function retryUpload() {
   if (result.success) {
     emit('success')
   }
-}
-
-// 查看本地报告
-function viewLocalReport() {
-  trainStore.view_only = true
-  emit('success')
 }
 
 // 返回到原始状态

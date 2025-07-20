@@ -7,17 +7,22 @@ import { useAudioStore } from '@/state/audio'
 import { useFreeStore } from '@/state/free'
 import { useGroupStore } from '@/state/group'
 import { useTrainStore } from '@/state/train'
+import { useSettingsStore } from '@/state/settings'
 import Back_blocker from './back_blocker.vue'
 import throttle from '@/lib/throttle'
 import { useBleStore } from '@/state/ble'
 import buttonx from '@/components/buttonx.vue'
 import popup from '@/components/popup.vue'
-import sequence_curve from '@/components/sequence_curve.vue'
+import TrainingRealtimeMonitor from '@/components/training-realtime-monitor.vue'
+import BreathSimple from './breath-simple.vue'
+import BreathBox from './breath-box.vue'
+import BreathModePopup from './breath-mode-popup.vue'
 
 const audioStore = useAudioStore()
 const trainStore = useTrainStore()
 const freeStore = useFreeStore()
 const groupStore = useGroupStore()
+const settingsStore = useSettingsStore()
 
 // 获取 back_blocker 组件引用
 const backBlockerRef = ref()
@@ -179,9 +184,22 @@ function exit() {
 }
 
 const descShow = ref(false)
+const breathModeShow = ref(false)
 
 function showDesc() {
-  descShow.value = true
+  breathModeShow.value = true
+}
+
+function showBreathMode() {
+  breathModeShow.value = true
+}
+
+function hideBreathMode() {
+  breathModeShow.value = false
+}
+
+function selectBreathMode(mode: 'simple' | 'box') {
+  settingsStore.setBreathMode(mode)
 }
 
 function hideDesc() {
@@ -259,68 +277,58 @@ const bleStore = useBleStore()
 <!-- 加载课程 -->
 
 <template>
-  <Page class="">
+  <Page>
     <template #main>
-      <view class="flex justify-between items-center px-3 py-2">
-        <view class="text-slate-50 text-24px">{{ groupStore.music?.name }}</view>
-        <Ble class="box-border"></Ble>
-      </view>
-      <Back_blocker ref="backBlockerRef" @stop-train="stopTrain" />
-      <!--  -->
-      <view class="flex flex-col items-center justify-center box-border px-3">
-        <view
-          :class="['w250 h250 mx-auto rounded-full train-circle mb-2 breath animate-playing', info.playing ? 'animation-playing' : 'animation-paused']"
-        ></view>
-
-        <view class="w-full">
-          <sequence_curve
-            hide-desc
-            theme="dark"
-            class="w-full"
-            :distract-points="distractPoints"
-            :show-latest="true"
-            :focus="focusData"
-            :relax="relaxData"
-            canvas-id="ok"
-          />
-        </view>
-      </view>
-      <!-- <view>{{ audioManager.currentTime }}-{{ audioStore.currentTime }}-{{ audioStore.slidePosition }}</view> -->
-      <view class="fixed w-full bottom-40 px1 box-border">
-        <!-- 播放曲线 -->
-
-        <slider
-          class=""
-          min="0"
-          :max="Math.ceil(info.musicLen)"
-          step="1"
-          :value="info.position"
-          block-size="12"
-          block-color="#e2e8f0"
-          activeColor="#e2e8f0"
-          backgroundColor="#5EBAE6"
-          @change="slideChange"
-          @changing="slideChanging"
-          @touchstart="beforeSlideChange"
-        />
-        <view class="flex justify-between text-white/45 px2 text-12px">
-          <view>{{ formatLen(info.position) }}</view>
-          <view>{{ formatLen(info.musicLen) }}</view>
+      <view class="flex flex-col" style="height: calc(100vh - 92px); min-height: 100%">
+        <!-- 第一行：标题和蓝牙 -->
+        <view class="flex justify-between items-center px-3 py-2">
+          <view class="text-slate-50 text-24px">{{ groupStore.music?.name }}</view>
+          <Ble class="box-border"></Ble>
         </view>
 
-        <view class="flex items-center justify-around mt-1">
-          <view class="bg-white/5 w-80 rounded-lg">
-            <buttonx @click="exit" type="text" class-name="" class="w-80">
-              <view class="text-white/65">结束</view>
-            </buttonx>
+        <Back_blocker ref="backBlockerRef" @stop-train="stopTrain" />
+
+        <!-- 第二行：呼吸模块区域 -->
+        <view class="flex-1 min-h-240px flex items-center justify-center">
+          <BreathSimple v-if="settingsStore.breathMode === 'simple'" :playing="info.playing" />
+          <BreathBox v-else :playing="info.playing" />
+        </view>
+
+        <!-- 第三行：底部区域 -->
+        <view class="px-3 pb-4">
+          <TrainingRealtimeMonitor class="w-full mb-2 block" :distract-points="distractPoints" :focus-data="focusData"
+            :relax-data="relaxData" />
+
+          <!-- 播放进度条 -->
+          <view class="relative px-[6rpx]">
+            <slider class="" min="0" :max="Math.ceil(info.musicLen)" step="1" :value="info.position" block-size="12"
+              block-color="#e2e8f0" activeColor="#e2e8f0" backgroundColor="rgba(226, 232, 240, 0.15)"
+              @change="slideChange" @changing="slideChanging" @touchstart="beforeSlideChange" />
+            <view
+              class="absolute -bottom-14 left-0 right-0 flex justify-between text-white/45 text-12px pointer-events-none z-10">
+              <view>{{ formatLen(info.position) }}</view>
+              <view>{{ formatLen(info.musicLen) }}</view>
+            </view>
           </view>
-          <view class="w-64 h-64 relative focus:opacity-0.6">
-            <img :src="info.playing ? '/static/svg/pause.svg' : '/static/svg/play.svg'" class="w-full h-full transition-all" @click="clickPlay" />
-          </view>
-          <view class="bg-white/10 w-80 rounded-lg">
-            <!-- <buttonx @click="showDesc" class="w-80" c type="text">
-              <view class="text-white/65">介绍</view>
-            </buttonx> -->
+
+          <!-- 操作按钮 -->
+          <view class="flex items-center justify-between mt-3">
+            <view class="bg-white/5 w-60 rounded-lg">
+              <buttonx @click="exit" type="text" class-name="" class="">
+                <view class="text-white/65">结束</view>
+              </buttonx>
+            </view>
+            <view class="w-64 h-64 relative focus:opacity-0.6">
+              <img :src="info.playing ? '/static/svg/pause.svg' : '/static/svg/play.svg'"
+                class="w-full h-full transition-all" @click="clickPlay" />
+            </view>
+            <view class="flex justify-end w-60">
+              <view class="rounded-lg bg-white/10 w-48">
+                <buttonx @click="showBreathMode" class-name="" type="text">
+                  <image src="/static/svg/setting-white.svg" class="w-28 h-28" />
+                </buttonx>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -344,6 +352,9 @@ const bleStore = useBleStore()
       </view>
     </view>
   </popup>
+
+  <BreathModePopup :open="breathModeShow" :current-mode="settingsStore.breathMode" @close="hideBreathMode"
+    @select="selectBreathMode" />
 </template>
 
 <style lang="scss">
@@ -351,103 +362,10 @@ wx-slider .wx-slider-handle-wrapper {
   height: 20rpx;
 }
 
-$breath-duration: 8s;
-$text-color: rgba(255, 255, 255, 0.6);
-$text-size: 24px;
-
-.breath {
-  animation: breath 8s ease-in-out infinite;
+wx-slider {
+  margin: 0;
 }
 
-.train-circle {
-  transform: scale(0.8);
-  background: radial-gradient(50% 50% at 50% 50%, rgba(255, 255, 255, 0) 33%, rgba(255, 255, 255, 0) 50.5%, rgba(255, 255, 255, 0.1) 93.5%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-
-  // 暂停状态
-  &.animation-paused {
-    animation-play-state: paused;
-
-    // 伪元素也暂停
-    &::before,
-    &::after {
-      animation-play-state: paused;
-    }
-  }
-
-  // 播放状态
-  &.animation-playing {
-    animation-play-state: running;
-
-    // 伪元素也播放
-    &::before,
-    &::after {
-      animation-play-state: running;
-    }
-  }
-
-  // “吸”字
-  &::before {
-    content: '吸';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: $text-color;
-    font-size: $text-size;
-    animation: show-inhale $breath-duration infinite;
-  }
-
-  // “呼”字
-  &::after {
-    content: '呼';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: $text-color;
-    font-size: $text-size;
-    animation: show-exhale $breath-duration infinite;
-  }
-}
-
-@keyframes breath {
-  0% {
-    transform: scale(0.8);
-  }
-
-  50% {
-    transform: scale(1);
-  }
-
-  100% {
-    transform: scale(0.8);
-  }
-}
-
-// “吸”动画：50%-100%（从大到小）显示
-@keyframes show-exhale {
-  0%,
-  50% {
-    opacity: 0;
-  } // 前半段隐藏
-  50.01%,
-  100% {
-    opacity: 1;
-  } // 后半段显示
-}
-
-// “呼”动画：0%-50%（从小到大）显示
-@keyframes show-inhale {
-  0%,
-  49.99% {
-    opacity: 1;
-  } // 前半段显示
-  50%,
-  100% {
-    opacity: 0;
-  } // 后半段隐藏
-}
 .divider {
   height: 1px;
   background: rgba(0, 0, 0, 0.15);
