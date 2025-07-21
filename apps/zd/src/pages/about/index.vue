@@ -80,7 +80,7 @@ import { version } from '@/consts/version'
 
       <view class="mt-2">
         <view class="text-blue-500 font-bold mb-1">联系我们</view>
-        <image src="/static/images/qr.png" class="w-234 h-234 mb-1" />
+        <image src="https://cyue.oss-cn-shenzhen.aliyuncs.com/assets/wls-qr.png" class="w-234 h-234 mb-1" />
         <view>公众号：ADHD互助联盟</view>
         <view>服务号：止动计划</view>
       </view>
