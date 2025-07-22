@@ -21,6 +21,11 @@ export const useSettingsStore = defineStore('settings', {
     setBreathMode(mode: 'simple' | 'box') {
       this.breathMode = mode
     },
+    
+    // 设置走神提示音音量
+    setDistractionVolume(volume: number) {
+      this.distraction_volume = volume
+    },
   },
   persist: true,
 })

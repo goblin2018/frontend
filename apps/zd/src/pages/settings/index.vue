@@ -115,7 +115,7 @@ import Popup from '@/components/popup.vue'
 import Setting_item from '@/components/setting_item.vue'
 import { useSettingsStore } from '@/state/settings'
 import { useUserStore } from '@/state/user'
-import { playDistractionAlert } from '@/lib/audio'
+import { playAlert } from '@/lib/audio-manager-simple'
 
 const showExit = ref(false)
 
@@ -124,9 +124,13 @@ function closeExit() {
 }
 
 function onVolumeChange(e) {
-  settingsStore.distraction_volume = e.detail.value / 100
+
+  const newVol = e.detail.value / 100 
+  settingsStore.distraction_volume = newVol
   // 用户调整音量后自动播放一下提示音
-  playDistractionAlert(settingsStore.distraction_volume)
+
+  playAlert(newVol)
+
 }
 
 function onFocusTargetChange(e) {

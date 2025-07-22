@@ -1,22 +1,22 @@
 <script lang="ts" setup>
 import Ble from '@/components/ble.vue'
+import buttonx from '@/components/buttonx.vue'
 import Page from '@/components/page.vue'
+import popup from '@/components/popup.vue'
+import TrainingRealtimeMonitor from '@/components/training-realtime-monitor.vue'
+import { keepScreenOn } from '@/lib/keep-screen-on'
 import { ossUrl } from '@/lib/oss'
+import throttle from '@/lib/throttle'
 import { formatLen } from '@/lib/time'
 import { useAudioStore } from '@/state/audio'
 import { useFreeStore } from '@/state/free'
 import { useGroupStore } from '@/state/group'
-import { useTrainStore } from '@/state/train'
 import { useSettingsStore } from '@/state/settings'
+import { useTrainStore } from '@/state/train'
 import Back_blocker from './back_blocker.vue'
-import throttle from '@/lib/throttle'
-import { useBleStore } from '@/state/ble'
-import buttonx from '@/components/buttonx.vue'
-import popup from '@/components/popup.vue'
-import TrainingRealtimeMonitor from '@/components/training-realtime-monitor.vue'
-import BreathSimple from './breath-simple.vue'
 import BreathBox from './breath-box.vue'
 import BreathModePopup from './breath-mode-popup.vue'
+import BreathSimple from './breath-simple.vue'
 
 const audioStore = useAudioStore()
 const trainStore = useTrainStore()
@@ -28,19 +28,21 @@ const settingsStore = useSettingsStore()
 const backBlockerRef = ref()
 
 onShow(() => {
+  // 初始化音频管理器
+  audioStore.initAudioManager()
+  audioStore.initMusic(groupStore.music)
+
   if (!trainStore.isFree) {
-    // audioManager.seek(audioStore.currentTime)
+    // 如果需要恢复播放位置，使用新的音频管理器
+    if (audioStore.currentTime > 0) {
+      audioStore.seekMusic(audioStore.currentTime)
+    }
   }
 
-  uni.setKeepScreenOn({
-    keepScreenOn: true,
-    fail: (err) => {
-      uni.setKeepScreenOn({ keepScreenOn: true })
-    },
-  })
+  keepScreenOn()
 })
 
-const audioManager = uni.getBackgroundAudioManager()
+// 移除 backgroundAudioManager，使用新的音频管理系统
 
 onUnload(() => {
   stopTrain()
@@ -54,11 +56,9 @@ function stopTrain() {
     timeInterval.value = null
   }
   trainStore.donePlay()
-  audioManager.stop()
+  audioStore.stopMusic()
   audioStore.reset()
 }
-
-// 并非立即播放
 
 function donePlay() {
   trainStore.donePlay()
@@ -67,36 +67,34 @@ function donePlay() {
   backBlockerRef.value?.showTrainCompleted()
 }
 
-audioManager.onEnded(() => {
-  playEnd()
-  donePlay()
-})
+// 音频结束事件现在通过AudioManager的回调处理
+// 在audioStore.initAudioManager()中已经设置了onMusicEnded回调
 
 const play = () => {
-  // if (audioManager.src !== ossUrl(music!.url)) {
-  audioManager.title = groupStore.music!.name
-  audioManager.coverImgUrl = ossUrl(groupStore.music!.image)
-  audioManager.src = ossUrl(groupStore.music!.url)
-  // }
 
-  if (Math.abs(audioManager.currentTime - audioStore.slidePosition) > 0.5) {
-    audioManager.seek(audioStore.slidePosition)
+  console.log("trigger play")
+  if (groupStore.music) {
+    audioStore.play()
+
+    // // 使用新的参数，不强制重启，允许从暂停状态恢复
+    // audioStore.playMusic(groupStore.music, false)
+
+    // // 如果需要跳转到特定位置
+    // if (Math.abs(audioStore.currentTime - audioStore.slidePosition) > 0.5) {
+    //   audioStore.seekMusic(audioStore.slidePosition)
+    // }
   }
-  setTimeout(() => {
-    audioManager.play()
-  })
 }
 
 const pause = () => {
-  audioManager.pause()
+  audioStore.pauseMusic()
 }
 
 const slideChange = (e: any) => {
-  audioManager.seek(e.detail.value)
-  audioStore.currentTime = e.detail.value
+  audioStore.seekMusic(e.detail.value)
   audioStore.isDragging = false
-  if (audioStore.beforeDragPlayging) {
-    audioManager.play()
+  if (audioStore.beforeDragPlayging && groupStore.music) {
+    audioStore.playMusic(groupStore.music)
   }
 }
 
@@ -104,8 +102,7 @@ const slideChanging = (e: any) => {
   if (trainStore.isFree) {
     freeStore.current_time = e.detail.value
   } else {
-    audioManager.seek(e.detail.value)
-    audioStore.currentTime = e.detail.value
+    audioStore.seekMusic(e.detail.value)
   }
 }
 
@@ -126,49 +123,19 @@ watch(
 const beforeSlideChange = () => {
   audioStore.isDragging = true
   // 记录下当前的状态
-  if (!audioManager.paused) {
+  if (audioStore.playing) {
     audioStore.beforeDragPlayging = true
-    audioManager.pause()
+    audioStore.pauseMusic()
   } else {
     audioStore.beforeDragPlayging = false
   }
 }
 
-var innerAudioContext: UniApp.InnerAudioContext
-
-function destroyInnerAudioContext() {
-  if (innerAudioContext) {
-    innerAudioContext.destroy()
-  }
-}
-
-function playStart() {
-  innerAudioContext = uni.createInnerAudioContext()
-  innerAudioContext.src = 'https://cyue.oss-cn-shenzhen.aliyuncs.com/static/start.MP3'
-  innerAudioContext.play()
-
-  setTimeout(() => {
-    destroyInnerAudioContext()
-  }, 10000)
-}
-
 const endPlaying = ref(false)
 
-function playEnd() {
-  endPlaying.value = true
-  innerAudioContext = uni.createInnerAudioContext()
-  innerAudioContext.src = 'https://cyue.oss-cn-shenzhen.aliyuncs.com/static/end.MP3'
-  innerAudioContext.play()
-
-  setTimeout(() => {
-    destroyInnerAudioContext()
-  }, 3000)
-}
-
 const clickPlay = throttle(() => {
-  if (!trainStore.train) {
-    // playStart()
-    trainStore.startTrain(groupStore.music!)
+  if (!trainStore.train && groupStore.music) {
+    trainStore.startTrain(groupStore.music)
   }
 
   if (audioStore.playing) {
@@ -179,16 +146,12 @@ const clickPlay = throttle(() => {
 }, 100)
 
 function exit() {
-  destroyInnerAudioContext()
+  audioStore.stopMusic()
   uni.navigateBack()
 }
 
 const descShow = ref(false)
 const breathModeShow = ref(false)
-
-function showDesc() {
-  breathModeShow.value = true
-}
 
 function showBreathMode() {
   breathModeShow.value = true
@@ -196,10 +159,6 @@ function showBreathMode() {
 
 function hideBreathMode() {
   breathModeShow.value = false
-}
-
-function selectBreathMode(mode: 'simple' | 'box') {
-  settingsStore.setBreathMode(mode)
 }
 
 function hideDesc() {
@@ -271,7 +230,10 @@ onHide(() => {
   }
 })
 
-const bleStore = useBleStore()
+
+onUnmounted(() => {
+  audioStore.stopMusic()
+})
 </script>
 
 <!-- 加载课程 -->
@@ -296,16 +258,25 @@ const bleStore = useBleStore()
 
         <!-- 第三行：底部区域 -->
         <view class="px-3 pb-4">
-          <TrainingRealtimeMonitor class="w-full mb-2 block" :distract-points="distractPoints" :focus-data="focusData"
-            :relax-data="relaxData" />
+          <TrainingRealtimeMonitor class="w-full mb-2 block" :distract-points="distractPoints" :focus-data="focusData" :relax-data="relaxData" />
 
           <!-- 播放进度条 -->
           <view class="relative px-[6rpx]">
-            <slider class="" min="0" :max="Math.ceil(info.musicLen)" step="1" :value="info.position" block-size="12"
-              block-color="#e2e8f0" activeColor="#e2e8f0" backgroundColor="rgba(226, 232, 240, 0.15)"
-              @change="slideChange" @changing="slideChanging" @touchstart="beforeSlideChange" />
-            <view
-              class="absolute -bottom-14 left-0 right-0 flex justify-between text-white/45 text-12px pointer-events-none z-10">
+            <slider
+              class=""
+              min="0"
+              :max="Math.ceil(info.musicLen)"
+              step="1"
+              :value="info.position"
+              block-size="12"
+              block-color="#e2e8f0"
+              activeColor="#e2e8f0"
+              backgroundColor="rgba(226, 232, 240, 0.15)"
+              @change="slideChange"
+              @changing="slideChanging"
+              @touchstart="beforeSlideChange"
+            />
+            <view class="absolute -bottom-14 left-0 right-0 flex justify-between text-white/45 text-12px pointer-events-none z-10">
               <view>{{ formatLen(info.position) }}</view>
               <view>{{ formatLen(info.musicLen) }}</view>
             </view>
@@ -319,8 +290,7 @@ const bleStore = useBleStore()
               </buttonx>
             </view>
             <view class="w-64 h-64 relative focus:opacity-0.6">
-              <img :src="info.playing ? '/static/svg/pause.svg' : '/static/svg/play.svg'"
-                class="w-full h-full transition-all" @click="clickPlay" />
+              <img :src="info.playing ? '/static/svg/pause.svg' : '/static/svg/play.svg'" class="w-full h-full transition-all" @click="clickPlay" />
             </view>
             <view class="flex justify-end w-60">
               <view class="rounded-lg bg-white/10 w-48">
@@ -353,8 +323,7 @@ const bleStore = useBleStore()
     </view>
   </popup>
 
-  <BreathModePopup :open="breathModeShow" :current-mode="settingsStore.breathMode" @close="hideBreathMode"
-    @select="selectBreathMode" />
+  <BreathModePopup :open="breathModeShow" :current-mode="settingsStore.breathMode" @close="hideBreathMode" @select="settingsStore.setBreathMode" />
 </template>
 
 <style lang="scss">

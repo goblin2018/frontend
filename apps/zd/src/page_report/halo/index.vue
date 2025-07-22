@@ -91,19 +91,23 @@ const pixelRatio = ref(1)
 onMounted(() => {
   pixelRatio.value = uni.getWindowInfo().pixelRatio || 1
   trainStore.startFreeTrain()
-  audioManager.title = '冥想之翼'
-  audioManager.src = ossUrl('music/audio/92b21a51641b1631dbfd397811403d6b')
-  audioManager.play()
-  audioManager.onEnded(() => {
-    audioManager.title = '冥想之翼'
-    audioManager.src = ossUrl('music/audio/92b21a51641b1631dbfd397811403d6b')
-    audioManager.play()
-  })
+  
+  // 初始化音频管理器
+  audioStore.initAudioManager()
+
+  
+  // 播放背景音乐
+  const audioManager = audioStore.audioManager
+  audioManager.setLoop(true)
+  audioManager.playMusic(
+    ossUrl('music/audio/92b21a51641b1631dbfd397811403d6b'),
+  )
 })
 
 onUnmounted(() => {
+  console.log("unmounted xxxxxx")
   trainStore.reset()
-  audioManager.stop()
+  audioStore.reset()
 })
 
 onShareAppMessage(() => ({
@@ -146,7 +150,9 @@ const waveData = computed(() => {
   }
 })
 
-const audioManager = uni.getBackgroundAudioManager()
+// 使用新的音频管理器
+import { useAudioStore } from '@/state/audio'
+const audioStore = useAudioStore()
 
 // 修改计算弹窗最大高度
 const maxPopupHeight = uni.getWindowInfo().screenHeight - 340

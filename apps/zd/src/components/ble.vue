@@ -5,9 +5,8 @@ import { getSensorData, type SensorData1, initBT, authorizeBle } from '@/lib/ble
 import buttonx from '@/components/buttonx.vue'
 import { useTrainStore } from '@/state/train'
 import { useUserStore } from '@/state/user'
-import { useSettingsStore } from '@/state/settings'
 import Empty from '@/components/business/empty.vue'
-import { playDistractionAlert, cleanupAudio } from '@/lib/audio'
+import {useAudioStore} from '@/state/audio'
 
 const popupOpen = ref(false)
 const close = () => {
@@ -16,9 +15,10 @@ const close = () => {
   popupOpen.value = false
 }
 
+const audioStore = useAudioStore()
+
 const emit = defineEmits(['onNotLogin'])
 
-const settingsStore = useSettingsStore()
 
 const userStore = useUserStore()
 
@@ -341,14 +341,15 @@ function closePopup() {
 onUnmounted(() => {
   clearCheckInterval()
   stopSearch()
-  cleanupAudio()
 })
 
 watch(
   () => trainStore.is_distracted,
   (val) => {
     if (val) {
-      playDistractionAlert(settingsStore.distraction_volume)
+      // 使用新的音频管理器播放走神提示音
+      // 这将自动降低背景音乐音量
+      audioStore.playDistractionAlert()
 
       setTimeout(() => {
         trainStore.is_distracted = false

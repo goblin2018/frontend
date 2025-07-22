@@ -7,48 +7,17 @@ onLoad(() => {
 })
 
 onShow(() => {
-  const audioManager = uni.getBackgroundAudioManager()
   const audioStore = useAudioStore()
+  
+  // 初始化音频管理器
+  audioStore.initAudioManager()
+  
+  // 保持屏幕常亮
   wx.setKeepScreenOn({
     keepScreenOn: true,
     fail: (err) => {
       wx.setKeepScreenOn({ keepScreenOn: true })
     },
-  })
-
-  audioManager.onWaiting(() => {
-    audioStore.loading = true
-  })
-  audioManager.onTimeUpdate(() => {
-    audioStore.currentTime = audioManager.currentTime
-  })
-
-  audioManager.onCanplay(() => {
-    audioStore.loading = false
-    if (audioStore.isDragging && !audioStore.beforeDragPlayging) {
-      audioManager.pause()
-    }
-  })
-
-  audioManager.onPlay(() => {
-    audioStore.playing = true
-  })
-
-  audioManager.onPause(() => {
-    audioStore.playing = false
-  })
-
-  audioManager.onEnded(() => {
-    audioStore.playing = false
-  })
-
-  audioManager.onStop(() => {
-    audioStore.playing = false
-  })
-
-  audioManager.onError((e) => {
-    console.log('audio error', e)
-    audioStore.playing = false
   })
 
   // if (!userStore.isLogin) {
