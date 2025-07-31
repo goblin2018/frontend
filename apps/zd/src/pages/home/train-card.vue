@@ -31,8 +31,8 @@ const trainTimeInfo = computed(() => {
 </script>
 
 <template>
-  <view class="container pt-3 w-full h176 box-border" @click="toTrain">
-    <view class="pl-2 mb-3.5">
+  <view class="container pt-3 w-full h176 box-border flex flex-col pb-1.5" @click="toTrain">
+    <view class="pl-2 flex-1">
       <view class="text-white text-18px font-500">训练模式</view>
       <view class="text-white/65 mt-0.5 font-400 text-14px">音频引导 练习报告</view>
     </view>

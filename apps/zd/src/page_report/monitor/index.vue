@@ -19,6 +19,7 @@
           :distract-points="distractPoints"
           :focus-data="trainStore.train_tmp.data.focus"
           :relax-data="trainStore.train_tmp.data.relax"
+          show-title
         />
 
         <Distraction_info theme="dark" class="mb-2" class-name=" rounded-xl" :count="trainStore.train?.distracted_count"></Distraction_info>
@@ -103,7 +104,7 @@
 <script setup lang="ts">
 import { useTrainStore, min_report_len } from '@/state/train'
 import ble from '@/components/ble.vue'
-import TrainingRealtimeMonitor from '@/components/training-realtime-monitor.vue'
+import TrainingRealtimeMonitor from '@/components/training-realtime-monitor2.vue'
 import reference from '../report/reference.vue'
 import band_info from '../report/band_info.vue'
 import Page from '@/components/page.vue'

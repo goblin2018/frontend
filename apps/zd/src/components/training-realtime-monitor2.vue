@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import Curve from '@/components/curve.vue'
-import progress_bar from '@/components/progress-bar.vue'
 import { getFlowStar } from '@/utils/trainCalculator'
 import { useSettingsStore } from '@/state/settings'
 import Popup from './popup.vue'
 import RightArrow from '@/components/right-arrow.vue'
 import buttonx from '@/components/buttonx.vue'
+import ToggleButton from '@/components/toggle-button.vue'
 
 interface Props {
   distractPoints: { x: number; y: number }[]
@@ -48,15 +48,14 @@ function close() {
 </script>
 
 <template>
-
   <view v-if="props.showTitle" class="mb-0.5 flex items-center" @click="showPopup = true">
-    <text class="mb-4px text-white font-medium ">专注&放松</text>
+    <text class="mb-4px text-white font-medium">专注&放松</text>
     <RightArrow class="h30" theme="dark" />
   </view>
 
   <Popup v-if="props.showTitle" :open="showPopup" @close="close" title="专注&放松">
     <view class="px-2 py-4">
-      <view class="mb-4 text-slate-800 ">
+      <view class="mb-4 text-slate-800">
         <view class="mb-2">专注（Attention）： 表示您的注意力集中程度，数值范围0-100, 60以上为优秀。</view>
         <view class="mb-2">放松（Meditation）： 表示您的精神和身体的放松程度，数值范围0-100, 60以上为优秀。</view>
         <view>心流（Flow）：您在练习过程中，当专注和放松同时达到一定水平时，会给予星星评价。</view>
@@ -65,26 +64,25 @@ function close() {
     </view>
   </Popup>
 
-  <view class="flex container">
-    <view class="flex-1 border-r border-white/15 border-r-solid p-1.5 box-border">
-      <progress_bar
-        class="mb-0.5 block"
-        label="专注"
-        :value="currentFocus"
-        text-color="#FCD34D"
-        :active="settingsStore.focusActive"
-        @click-tag="toggleFocusActive"
-      />
-      <progress_bar
-        class="mb-2 block"
-        label="放松"
-        :value="currentRelax"
-        text-color="#86EFAC"
-        :active="settingsStore.relaxActive"
-        @click-tag="toggleRelaxActive"
-      />
+  <view class="">
+    <view class="flex items-center justify-between mb-1">
+      <view class="flex gap-2">
+        <ToggleButton label="专注" :value="currentFocus" :active="settingsStore.focusActive" color="#FCD34D" @click="toggleFocusActive" />
+        <ToggleButton label="放松" :value="currentRelax" :active="settingsStore.relaxActive" color="#86EFAC" @click="toggleRelaxActive" />
+      </view>
 
-      <!-- 曲线图 -->
+      <view class="flex gap-1 items-center">
+        <view class="text-white_50 text-base font-medium">心流</view>
+        <view class="flex">
+          <view v-for="i in 5" :key="i" class="">
+            <image class="w-24 h-24" :src="currentStar >= i ? '/static/svg/star_yellow.svg' : '/static/svg/star_gray.svg'" />
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 曲线图 -->
+    <view class="container p-1.5 box-border">
       <Curve
         theme="dark"
         class="w-full block"
@@ -96,14 +94,6 @@ function close() {
         :show-relax="settingsStore.relaxActive"
         canvas-id="ok"
       />
-    </view>
-
-    <view class="flex-shrink-0 p-1 box-border">
-      <view class="flex flex-col-reverse items-center justify-center h-full">
-        <view v-for="i in 5" :key="i" class="">
-          <image class="w-24 h-24" :src="currentStar >= i ? '/static/svg/star_yellow.svg' : '/static/svg/star_gray.svg'" />
-        </view>
-      </view>
     </view>
   </view>
 </template>

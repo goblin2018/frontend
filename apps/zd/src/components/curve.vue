@@ -1,5 +1,5 @@
 <template>
-  <view :class="['w-full relative', props.theme === 'dark' ? 'h-68' : 'h-145 chart']">
+  <view :class="['w-full relative', props.theme === 'dark' ? 'h-145' : 'h-145 chart']">
     <awx-echarts
       :hide="popupStore.show"
       class="z-0"
@@ -27,12 +27,16 @@ const props = withDefaults(
     theme?: Theme
     disableTouch?: boolean
     distractPoints?: { x: number; y: number }[]
+    showFocus?: boolean
+    showRelax?: boolean
   }>(),
   {
     showLatest: false,
     theme: 'light',
     disableTouch: true,
     distractPoints: () => [],
+    showFocus: true,
+    showRelax: true,
   },
 )
 
@@ -48,6 +52,70 @@ const createOption = (focusData: number[], relaxData: number[], timeData: number
     timeData = Array.from({ length: dataWindow }, (_, i) => i)
   }
 
+  const series = []
+  
+  // 专注力曲线 - 始终添加，但根据showFocus决定是否显示数据
+  series.push({
+    name: '专注力',
+    type: 'line',
+    smooth: true,
+    data: props.showFocus ? focusData : [], // 关键修改：隐藏时设为空数组
+    lineStyle: {
+      color: props.theme === 'dark' ? '#fcd34d' : '#F59E0B',
+    },
+    markPoint: props.showLatest && props.showFocus
+      ? {
+          symbol: 'circle',
+          symbolSize: 2,
+          itemStyle: {
+            color: '#FFFFFF',
+          },
+          data: props.distractPoints.filter((point) => point.x >= 0 && point.x < dataWindow).map((p) => ({ coord: [p.x, p.y] })),
+        }
+      : undefined,
+    areaStyle: props.showFocus ? {
+      color: new echartsInstance.graphic.LinearGradient(0, 0, 0, 1, [
+        {
+          offset: 0,
+          color: props.theme === 'dark' ? 'rgba(253, 230, 138, 0.65)' : 'rgba(251, 191, 36, 0.65)',
+        },
+        {
+          offset: 1,
+          color: 'rgba(255, 255, 255, 0)',
+        },
+      ]),
+    } : undefined, // 隐藏时不显示区域填充
+    showSymbol: !props.showLatest && props.showFocus,
+  })
+  
+  // 放松度曲线 - 始终添加，但根据showRelax决定是否显示数据
+  series.push({
+    name: '放松度',
+    type: 'line',
+    smooth: true,
+    data: props.showRelax ? relaxData : [], // 关键修改：隐藏时设为空数组
+    lineStyle: {
+      color: props.theme === 'dark' ? '#86EFAC' : '#22C55E',
+    },
+    areaStyle: props.showRelax ? {
+      color: new echartsInstance.graphic.LinearGradient(0, 0, 0, 1, [
+        {
+          offset: 0,
+          color: props.theme === 'light' ? 'rgba(134, 239, 172, 0.65)' : 'rgba(187, 247, 208, 0.65)',
+        },
+        {
+          offset: 1,
+          color: 'rgba(255, 255, 255, 0)',
+        },
+      ]),
+    } : undefined, // 隐藏时不显示区域填充
+    showSymbol: !props.showLatest && props.showRelax,
+  })
+
+
+
+  // 移除标识线系列，避免与Y轴标签重复
+
   return {
     tooltip: {
       trigger: 'axis',
@@ -56,10 +124,10 @@ const createOption = (focusData: number[], relaxData: number[], timeData: number
       },
     },
     grid: {
-      top: props.theme === 'dark' ? 0 : 12,
-      right: props.theme === 'dark' ? 0 : 12,
-      left: props.theme === 'dark' ? 0 : props.showLatest ? 12 : 30,
-      bottom: props.theme === 'dark' ? 0 : props.showLatest ? 12 : 65,
+      top: 12,
+      right: 35, // 为Y轴评级标签留出更多空间
+      left: 30, // 为Y轴标签留出足够空间
+      bottom: props.showLatest ? 12 : 65,
     },
     xAxis: {
       type: 'category',
@@ -68,22 +136,63 @@ const createOption = (focusData: number[], relaxData: number[], timeData: number
       axisLine: {
         show: props.theme !== 'dark',
         lineStyle: {
-          color: props.theme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : '#000', // 或 'white'
+          color: props.theme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : '#000',
         },
       },
       interval: timeData.length / 10,
       axisTick: { show: props.theme !== 'dark' && !props.showLatest },
       axisLabel: { show: props.theme !== 'dark' && !props.showLatest },
     },
-    yAxis: {
-      type: 'value',
-      max: 100,
-      interval: 50,
-      axisLine: { show: props.theme !== 'dark' && !props.showLatest },
-      axisTick: { show: props.theme !== 'dark' && !props.showLatest },
-      axisLabel: { show: props.theme !== 'dark' && !props.showLatest }, // 控制刻度文字显示
-      splitLine: { show: props.theme !== 'dark' && !props.showLatest }, // 控制水平横线显示
-    },
+    yAxis: [
+      {
+        type: 'value',
+        min: 0,
+        max: 100,
+        interval: 20, // 显示0、20、40、60、80、100
+        axisLine: { show: props.theme !== 'dark' && !props.showLatest },
+        axisTick: { show: props.theme !== 'dark' && !props.showLatest },
+        axisLabel: { 
+          show: true, // 左侧显示数值
+          color: props.theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#666',
+          fontSize: 12,
+          fontWeight: 600
+        },
+        splitLine: { 
+          show: true, // 始终显示分割线（水平虚线）
+          lineStyle: {
+            color: props.theme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
+            type: 'dashed',
+          }
+        },
+      },
+      {
+        type: 'value',
+        min: 0,
+        max: 100,
+        interval: 20,
+        position: 'right',
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: {
+          show: true, // 右侧显示文字描述
+          color: props.theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#666',
+          fontSize: 12,
+          fontWeight: 600,
+          formatter: function(value: number) {
+            const labels: { [key: number]: string } = {
+              0: '欠佳',
+              20: '普通',
+              40: '良好', 
+              60: '优秀',
+              80: '',
+              100: ''
+            }
+            return labels[value] || ''
+          }
+        },
+        splitLine: { show: false },
+      }
+    ],
     dataZoom:
       props.showLatest || props.theme === 'dark'
         ? []
@@ -95,82 +204,7 @@ const createOption = (focusData: number[], relaxData: number[], timeData: number
               showDetail: false,
             },
           ],
-    series: [
-      {
-        name: '专注力',
-        type: 'line',
-        smooth: true,
-        data: focusData,
-        lineStyle: {
-          color: props.theme === 'dark' ? '#fcd34d' : '#F59E0B',
-        },
-        markPoint: props.showLatest
-          ? {
-              symbol: 'circle',
-              symbolSize: 2,
-              // animation: false,  // 关闭动画
-              // silent: true,      // 禁用交互
-              itemStyle: {
-                color: '#FFFFFF',
-              },
-              data: props.distractPoints.filter((point) => point.x >= 0 && point.x < dataWindow).map((p) => ({ coord: [p.x, p.y] })),
-            }
-          : undefined,
-        areaStyle: {
-          color: new echartsInstance.graphic.LinearGradient(0, 0, 0, 1, [
-            {
-              offset: 0,
-              color: props.theme === 'dark' ? 'rgba(253, 230, 138, 0.65)' : 'rgba(251, 191, 36, 0.65)',
-            },
-            {
-              offset: 1,
-              color: 'rgba(255, 255, 255, 0)',
-            },
-          ]),
-        },
-
-        showSymbol: !props.showLatest,
-      },
-      {
-        name: '放松度',
-        type: 'line',
-        smooth: true,
-        data: relaxData,
-        lineStyle: {
-          color: props.theme === 'dark' ? '#86EFAC' : '#22C55E',
-        },
-
-        areaStyle: {
-          color: new echartsInstance.graphic.LinearGradient(0, 0, 0, 1, [
-            {
-              offset: 0,
-              color: props.theme === 'light' ? 'rgba(134, 239, 172, 0.65)' : 'rgba(187, 247, 208, 0.65)',
-            },
-            {
-              offset: 1,
-              color: 'rgba(255, 255, 255, 0)',
-            },
-          ]),
-        },
-
-        showSymbol: !props.showLatest,
-      },
-      // // 干扰点用散点图
-      // ...(props.showLatest
-      //   ? [
-      //       {
-      //         name: '干扰点',
-      //         type: 'scatter',
-      //         symbol: 'circle',
-      //         symbolSize: 8,
-      //         itemStyle: {
-      //           color: '#FFFFFF',
-      //         },
-      //         data: props.distractPoints.map((point) => [point.x, point.y]),
-      //       },
-      //     ]
-      //   : []),
-    ],
+    series,
   }
 }
 
@@ -213,7 +247,7 @@ const initChart = (e: any) => {
 
 // 监听数据变化
 watch(
-  [() => [props.focus, props.relax, props.showLatest]],
+  [() => [props.focus, props.relax, props.showLatest, props.showFocus, props.showRelax]],
   async () => {
     if (!chartInstance || !props.showLatest) return
     await nextTick()

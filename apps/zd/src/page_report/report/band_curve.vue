@@ -1,7 +1,7 @@
 <template>
-  <view class="flex items-center h-40">
-    <view :class="['font-medium mr-0.5', theme == 'light' ? 'text-slate-950' : 'text-slate-50']">{{ title }}</view>
-    <right-arrow class="h30" :theme="theme" @click="show = true" />
+  <view class="flex items-center h-40" @click="show = true">
+    <view :class="['font-medium mb-4px', theme == 'light' ? 'text-slate-950' : 'text-slate-50 ']">{{ title }}</view>
+    <right-arrow class="h30" :theme="theme" />
   </view>
   <Popup :open="show" @close="close" :title="title">
     <view class="px-2 py-4">

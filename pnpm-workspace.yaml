@@ -1,5 +1,7 @@
 packages:
   - apps/*
+  - apps/fundshow/*
+  - apps/playground/*
   - packages/*
 onlyBuiltDependencies:
   - '@parcel/watcher'

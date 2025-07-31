@@ -47,7 +47,7 @@ const attrs = useAttrs()
 </template>
 <style lang="scss">
 .base-bg {
-  background: url('https://cyue.oss-cn-shenzhen.aliyuncs.com/assets/play-bg.jpg');
+  background: url('https://cyue.oss-cn-shenzhen.aliyuncs.com/assets/play-bg-white.jpg');
   background-size: cover;
   background-repeat: no-repeat;
   background-color: #9dd6f4;

@@ -4,12 +4,21 @@ interface Props {
   value: number
   maxValue?: number
   textColor?: string
+  active?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   maxValue: 100,
   textColor: '#ffffff',
+  active: true,
 })
+
+const emit = defineEmits(['click-tag'])
+
+
+const handleClick = () => {
+  emit('click-tag')
+}
 
 // 计算进度百分比
 const progressPercentage = computed(() => {
@@ -20,8 +29,10 @@ const progressPercentage = computed(() => {
 </script>
 
 <template>
-  <view class="flex items-center justify-between gap-3 w-full">
-    <text class="text-white/35 flex-shrink-0">{{ label }}</text>
+  <view class="flex items-center justify-between gap-3 w-full" >
+    <view @click="handleClick" :class="['flex-shrink-0 rounded-lg w-64 h-32 flex items-center justify-center', active ? 'text-white bg-white/25' : 'text-white/50 bg-white/8']">
+      <text class=" ">{{ label }}</text>
+    </view>
     <view class="flex-1 bg-[rgba(255,255,255,0.08)] rounded-lg overflow-hidden h-8">
       <view
         class="h-full bg-white rounded-lg transition-all duration-300"
