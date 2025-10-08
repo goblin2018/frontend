@@ -1,0 +1,46 @@
+import { ThemeConfig } from 'antd'
+export const mobileTheme: ThemeConfig = {
+  token: {
+    colorPrimary: '#1570d2',
+    colorSuccess: '#04844b',
+    colorSuccessBg: '#d4efde',
+    colorWarning: '#ffb75d',
+    colorWarningBg: '#fff9e9',
+    colorError: '#c23934',
+    colorInfo: '#1570d2',
+    colorText: '#242426',
+    colorTextSecondary: '#444446',
+    colorTextTertiary: '#6c6c70',
+    colorTextQuaternary: '#aeaeb2',
+    wireframe: false,
+    fontSize: 16,
+    sizeUnit: 4,
+    sizeStep: 4,
+    colorTextBase: '#000000',
+    borderRadius: 4,
+    fontFamily: 'Han',
+  },
+}
+
+export const webTheme: ThemeConfig = {
+  token: {
+    colorPrimary: '#1570d2',
+    colorSuccess: '#04844b',
+    colorSuccessBg: '#d4efde',
+    colorWarning: '#ffb75d',
+    colorWarningBg: '#fff9e9',
+    colorError: '#c23934',
+    colorInfo: '#1570d2',
+    colorText: '#242426',
+    colorTextSecondary: '#444446',
+    colorTextTertiary: '#6c6c70',
+    colorTextQuaternary: '#aeaeb2',
+    wireframe: false,
+    fontSize: 14,
+    sizeUnit: 4,
+    sizeStep: 4,
+    colorTextBase: '#000000',
+    borderRadius: 2,
+    fontFamily: 'Han',
+  },
+}

@@ -1,0 +1,36 @@
+(redirect) {
+	@http {
+		protocol http
+		not path /.well-known/acme-challenge/*
+	}
+	redir @http https://{host}{uri}
+}
+
+chan.mindpanda.cn {
+	root  * /var/www/admin
+	tls zhangyl2015@qq.com 
+	handle /api/* {
+    reverse_proxy server:9001
+  }
+
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+
+
+admin.mindpanda.cn {
+	root  * /var/www/admin
+	tls zhangyl2015@qq.com 
+	handle /api/* {
+    reverse_proxy server:9001
+  }
+
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+}
+

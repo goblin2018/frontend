@@ -1,0 +1,5 @@
+export const pagesDir = 'src/pages'
+export const componentsDir = 'src/components'
+export const storeDir = 'src/store'
+export const utilsDir = 'src/utils'
+export const typesDir = 'src/types'
