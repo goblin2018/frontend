@@ -11,6 +11,7 @@ export interface User {
   flowCount?: number
   trainTime?: number
   flowStarCount?: number
+  courseState?: State2
 }
 
 export enum State2 {

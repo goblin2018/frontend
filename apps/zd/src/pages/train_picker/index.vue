@@ -29,7 +29,7 @@ function isCurrent(muisc: Music) {
 }
 
 function isLocked(group: Group) {
-  return groupStore.courseState == State2.Off && group.name.includes('练习')
+  return !!userStore.user &&  userStore.user.courseState == State2.Off && group.name.includes('练习')
 }
 
 function pick(index: number) {
@@ -63,7 +63,7 @@ function confirm() {
     return
   }
 
-  if (isLocked(groupStore.group)) {
+  if (isLocked(groupStore.groups[groupStore.activeIndex])) {
     uni.showToast({
       title: '解锁之后访问',
       icon: 'none',
