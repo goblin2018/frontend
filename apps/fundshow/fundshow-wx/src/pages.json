@@ -1,0 +1,117 @@
+{
+  "pages": [
+    {
+      "name": "home",
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "首页"
+      },
+      "meta": {
+        "tabBar": true
+      }
+    },
+    {
+      "name": "activity",
+      "path": "pages/activity/index",
+      "style": {
+        "navigationBarTitleText": "活动"
+      }
+    },
+    {
+      "name": "activity-list",
+      "path": "pages/activity-list/index",
+      "style": {
+        "navigationBarTitleText": "活动列表"
+      }
+    },
+    {
+      "name": "member",
+      "path": "pages/member/index",
+      "style": {
+        "navigationBarTitleText": "开通会员"
+      }
+    },
+
+    {
+      "name": "about",
+      "path": "pages/about/index",
+      "style": {
+        "navigationBarTitleText": "关于"
+      },
+      "meta": {}
+    },
+
+    {
+      "name": "settings",
+      "path": "pages/settings/index",
+      "style": {
+        "navigationBarTitleText": "设置"
+      },
+      "meta": {}
+    },
+    {
+      "name": "settings-me",
+      "path": "pages/settings/me",
+      "style": {
+        "navigationBarTitleText": "个人信息"
+      },
+      "meta": {}
+    },
+
+    {
+      "name": "Me",
+      "path": "pages/me/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      },
+      "meta": {
+        "tabBar": true
+      }
+    }
+  ],
+
+  "requiredPrivateInfos": ["chooseAddress"],
+
+  "subPackages": [],
+
+  "preloadRule": {
+    "pages/home/index": {
+      "network": "all",
+      "packages": []
+    }
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "uni-app",
+    "navigationBarBackgroundColor": "#fff",
+    "backgroundColor": "#fff",
+    "navigationStyle": "default",
+    "renderingMode": "seperated",
+    "pageOrientation": "portrait"
+  },
+  "tabBar": {
+    "color": "rgba(0, 0, 0, 0.8)",
+    "selectedColor": "#3B82F6",
+    "backgroundColor": "#fff",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "iconPath": "static/images/tabBar/home.png",
+        "text": "首页",
+        "selectedIconPath": "static/images/tabBar/home-s.png"
+      },
+      {
+        "pagePath": "pages/me/index",
+        "iconPath": "static/images/tabBar/user.png",
+        "text": "我的",
+        "selectedIconPath": "static/images/tabBar/user-s.png"
+      }
+    ]
+  },
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^w-(.*)": "@frontend/ui-uni/src/components/w-$1/w-$1.vue"
+    }
+  }
+}
